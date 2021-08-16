@@ -10,7 +10,7 @@ from .base import BaseFunction
 class MeFunction(BaseFunction):
     """ 返回模型字段自身 """
 
-    alias = {'me'}
+    alias = {'me', 'self', 'field'}
 
     def eval(self) -> GenericFunction:
         """ 生成的函数

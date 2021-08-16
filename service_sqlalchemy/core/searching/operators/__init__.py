@@ -24,10 +24,12 @@ from ._iendswith import IEndsWithOperator
 from ._contains import ContainsOperator
 from ._icontains import IContainsOperator
 
-from ._is import IsOperator
-from ._is_not import IsNotOperator
 from ._in import InOperator
 from ._not_in import NotInOperator
+from ._is import IsOperator
+from ._is_not import IsNotOperator
+from ._is_null import IsNullOperator
+from ._is_not_null import IsNotNullOperator
 
 from ._any import AnyOperator
 from ._has import HasOperator
