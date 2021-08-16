@@ -79,7 +79,7 @@ def orm_json_search(
         *,
         module: ModuleType,
         query: t.List[t.Union[t.Text, t.Dict]],
-        join: t.List[t.Dict[t.Text, t.Any]],
+        join: t.Optional[t.List[t.Dict[t.Text, t.Any]]] = None,
         filter_by: t.Optional[t.Union[t.Dict, t.List]] = None,
         group_by: t.Optional[t.List[t.Union[t.Text, t.Dict]]] = None,
         having: t.Optional[t.Union[t.Dict, t.List]] = None,

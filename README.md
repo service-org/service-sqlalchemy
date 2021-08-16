@@ -4,25 +4,19 @@
 |:------|:------|      
 |cross platform |3.9.16|
 
-# 注意事项
+# [注意事项](https://specs.openstack.org/openstack/openstack-specs/specs/eventlet-best-practices.html#database-drivers)
 
-You may use any database [driver compatible with SQLAlchemy](http://docs.sqlalchemy.org/en/rel_0_9/dialects/index.html)
-provided it is safe to use with [eventlet](http://eventlet.net). This will include all pure This will inc-python
-drivers. Known safe drivers are:
+- [pysqlite](https://docs.sqlalchemy.org/en/14/dialects/sqlite.html#module-sqlalchemy.dialects.sqlite.pysqlite)
+- [pymysql](https://docs.sqlalchemy.org/en/14/dialects/mysql.html#module-sqlalchemy.dialects.mysql.pymysql)
+- [pyodbc](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15)
 
-* [pysqlite](http://docs.sqlalchemy.org/en/rel_0_9/dialects/sqlite.html#module-sqlalchemy.dialects.sqlite.pysqlite)
-* [pymysql](http://docs.sqlalchemy.org/en/rel_0_9/dialects/mysql.html#module-sqlalchemy.dialects.mysql.pymysql)
-* [pyodbc](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15)
+# [社区扩展](https://github.com/dahlia/awesome-sqlalchemy)
 
 # 组件安装
 
 ```shell
 pip install -U service-sqlalchemy 
 ```
-
-# 社区扩展
-
-You may need extensions [awesome-sqlalchemy](https://github.com/dahlia/awesome-sqlalchemy)
 
 # 配置文件
 
@@ -48,8 +42,13 @@ SQLALCHEMY:
     ├── service.py
     └── models
       ├── base.py
-      ├── item.py
-      └── user.py
+      ├── user.py
+      ├── role.py
+      ├── perm.py
+      ├── role_perm.py
+      ├── user_perm.py
+      ├── user_role.py
+      └── __init__.py
 ```
 
 > project/models/base.py
@@ -76,23 +75,30 @@ BaseModel = declarative_base()
 from __future__ import annotations
 
 import sqlalchemy as sa
-import sqlalchemy_utils as su
+
+from sqlalchemy.orm import relationship
 
 from .base import BaseModel
+# secondary必须是Table对象
+from .user_role import UserRole
+from .user_perm import UserPerm
 
 
-class User(BaseModel, su.Timestamp):
+class User(BaseModel):
     """ 用户模型 """
-    __tablename__ = 'users'
-    __table_args__ = {
-        'comment': '用户表'
-    }
+    __tablename__ = 'user'
+    __table_args__ = (
+        # 字典配置必须放最底部
+        {'comment': '用户表'},
+    )
 
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='用户ID')
-    name = sa.Column('用户名称', sa.String(64), nullable=False, comment='用户名称')
+    name = sa.Column(sa.String(64), nullable=False, comment='用户名称')
+    roles = relationship('Role', secondary=UserRole, back_populates='users')
+    perms = relationship('Perm', secondary=UserPerm, back_populates='users')
 ```
 
-> project/models/item.py
+> project/models/role.py
 
 ```python
 #! -*- coding: utf-8 -*-
@@ -102,20 +108,129 @@ class User(BaseModel, su.Timestamp):
 from __future__ import annotations
 
 import sqlalchemy as sa
-import sqlalchemy_utils as su
+
+from sqlalchemy.orm import relationship
+
+from .base import BaseModel
+# secondary必须是Table对象
+from .user_role import UserRole
+from .role_perm import RolePerm
+
+
+class Role(BaseModel):
+    """ 角色模型 """
+    __tablename__ = 'role'
+    __table_args__ = (
+        # 字典配置必须放最底部
+        {'comment': '角色表'},
+    )
+
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='角色ID')
+    name = sa.Column(sa.String(64), nullable=False, comment='角色名称')
+    users = relationship('User', secondary=UserRole, back_populates='roles')
+    perms = relationship('Perm', secondary=RolePerm, back_populates='roles')
+```
+
+> project/models/perm.py
+
+```python
+#! -*- coding: utf-8 -*-
+#
+# author: forcemain@163.com
+
+from __future__ import annotations
+
+import sqlalchemy as sa
+
+from sqlalchemy.orm import relationship
+
+from .base import BaseModel
+# secondary必须是Table对象
+from .user_perm import UserPerm
+from .role_perm import RolePerm
+
+
+class Perm(BaseModel):
+    """ 权限模型 """
+    __tablename__ = 'perm'
+    __table_args__ = (
+        # 字典配置必须放最底部
+        {'comment': '权限表'}
+    )
+
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='权限ID')
+    name = sa.Column(sa.String(64), nullable=False, comment='权限名称')
+    users = relationship('User', secondary=UserPerm, back_populates='perms')
+    roles = relationship('Role', secondary=RolePerm, back_populates='perms')
+```
+
+> project/models/role_perm.py
+
+```python
+#! -*- coding: utf-8 -*-
+#
+# author: forcemain@163.com
+
+from __future__ import annotations
+
+import sqlalchemy as sa
 
 from .base import BaseModel
 
+# 角色权限
+RolePerm = sa.Table(
+    'role_perm',
+    BaseModel.metadata,
+    sa.Column('id', sa.Integer, primary_key=True, autoincrement=True, comment='关联ID'),
+    sa.Column('role_id', sa.Integer, sa.ForeignKey('role.id'), nullable=False, comment='角色ID'),
+    sa.Column('perm_id', sa.Integer, sa.ForeignKey('perm.id'), nullable=False, comment='权限ID')
+)
+```
 
-class Item(BaseModel, su.Timestamp):
-    """ 事物模型 """
-    __tablename__ = 'items'
-    __table_args__ = {
-        'comment': '事物表'
-    }
+> project/models/user_perm.py
 
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='事务ID')
-    name = sa.Column(sa.String(64), nullable=False, comment='事物名称')
+```python
+#! -*- coding: utf-8 -*-
+#
+# author: forcemain@163.com
+
+from __future__ import annotations
+
+import sqlalchemy as sa
+
+from .base import BaseModel
+
+# 用户权限
+UserPerm = sa.Table(
+    'user_perm',
+    BaseModel.metadata,
+    sa.Column('id', sa.Integer, primary_key=True, autoincrement=True, comment='关联ID'),
+    sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id'), nullable=False, comment='用户ID'),
+    sa.Column('perm_id', sa.Integer, sa.ForeignKey('perm.id'), nullable=False, comment='权限ID')
+)
+```
+
+> project/models/user_role.py
+
+```python
+#! -*- coding: utf-8 -*-
+#
+# author: forcemain@163.com
+
+from __future__ import annotations
+
+import sqlalchemy as sa
+
+from .base import BaseModel
+
+# 用户角色
+UserRole = sa.Table(
+    'user_role',
+    BaseModel.metadata,
+    sa.Column('id', sa.Integer, primary_key=True, autoincrement=True, comment='关联ID'),
+    sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id'), nullable=False, comment='用户ID'),
+    sa.Column('role_id', sa.Integer, sa.ForeignKey('role.id'), nullable=False, comment='角色ID')
+)
 ```
 
 > project/models/\_\_init\_\_.py
@@ -128,7 +243,12 @@ class Item(BaseModel, su.Timestamp):
 from __future__ import annotations
 
 from .user import User
-from .item import Item
+from .role import Role
+from .perm import Perm
+from .user_role import UserRole
+from .user_perm import UserPerm
+from .role_perm import RolePerm
+
 ```
 
 > project/service.py
@@ -175,15 +295,15 @@ class Service(BaseService):
 
         doc: https://github.com/kiorky/croniter
              https://docs.sqlalchemy.org/en/14/contents.html
-             
+
         """
         # defaults不为空才会触发更新事件
-        defaults = {'name': 'forcemain'}
-        user = update_or_create(self.db_session,  # type: ignore
-                                model=models.User,
-                                defaults=defaults,
-                                name='forcemain')
-        logger.debug(f'yeah~ yeah~ yeah~, i am changed at {user.updated}')
+        defaults = {'name': 'admin'}
+        update_or_create(self.db_session,  # type: ignore
+                         model=models.Perm,
+                         defaults=defaults,
+                         name='admin')
+        logger.debug(f'yeah~ yeah~ yeah~, i am changed')
 ```
 
 > facade.py
@@ -207,6 +327,7 @@ service = Service()
 :point_right: core alembic --name test init alembic/test
 
 ```text
+├── ...........
 ├── alembic.ini
 ├── alembic
 └── test
@@ -237,20 +358,10 @@ import sqlalchemy_utils as su
 
 :point_right: core alembic --name test upgrade head
 
-# 高级查询
-```
-├── facade.py
-├── config.yaml
-└── project
-    ├── __init__.py
-    ├── service.py
-    └── models
-      ├── base.py
-      ├── user.py
-      ├── role.py
-      └── perm.py
-```
-> project/models/user.py
+# 扩展查询
+
+> `orm_json_search`函数可将json转为orm查询表达式,支持高级查询语句的构建,更多功能等你挖掘~
+
 ```python
 #! -*- coding: utf-8 -*-
 #
@@ -258,106 +369,301 @@ import sqlalchemy_utils as su
 
 from __future__ import annotations
 
-import sqlalchemy as sa
+import typing as t
 
-from sqlalchemy.orm import relationship
-
-from .base import BaseModel
-
-
-class User(BaseModel):
-    """ 用户模型 """
-    __tablename__ = 'users'
-    __table_args__ = {
-        'comment': '用户表'
-    }
-
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='用户ID')
-    name = sa.Column(sa.String(64), nullable=False, comment='用户名称')
-    roles = relationship('Role')
-```
-> project/models/role.py
-```python
-#! -*- coding: utf-8 -*-
-#
-# author: forcemain@163.com
-
-from __future__ import annotations
-
-import sqlalchemy as sa
-
-from sqlalchemy.orm import relationship
-
-from .base import BaseModel
-
-
-class Role(BaseModel):
-    """ 角色模型 """
-    __tablename__ = 'roles'
-    __table_args__ = {
-        'comment': '角色表'
-    }
-
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='角色ID')
-    name = sa.Column(sa.String(64), nullable=False, comment='角色名称')
-    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'))
-    perm_id = sa.Column(sa.Integer, sa.ForeignKey('perms.id'))
-    perms = relationship('Perm')
-```
-> project/models/perm.py
-```python
-#! -*- coding: utf-8 -*-
-#
-# author: forcemain@163.com
-
-from __future__ import annotations
-
-import sqlalchemy as sa
-
-from .base import BaseModel
-
-
-class Perm(BaseModel):
-    """ 权限模型 """
-    __tablename__ = 'perms'
-    __table_args__ = {
-        'comment': '权限表'
-    }
-
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='权限ID')
-    name = sa.Column(sa.String(64), nullable=False, comment='权限名称')
-```
-* [eq](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__eq__)
-```python
+from logging import getLogger
+from service_croniter.core.entrypoints import croniter
+from service_sqlalchemy.core.dependencies import SQLAlchemy
+from service_core.core.service import Service as BaseService
 from service_sqlalchemy.core.shortcuts import orm_json_search
 
+from . import models
+
+logger = getLogger(__name__)
+
+
+class Service(BaseService):
+    """ 微服务类 """
+
+    # 微服务名称
+    name = 'demo'
+    # 微服务简介
+    desc = 'demo'
+
+    db_session = SQLAlchemy(alias='test', debug=True)
+
+    def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
+        # 此服务无需启动监听端口, 请初始化掉下面参数
+        self.host = ''
+        self.port = 0
+        super(Service, self).__init__(*args, **kwargs)
+
+    @croniter.cron('* * * * * */1')
+    def test_database_orm_json_search(self) -> None:
+        """ 测试构造数据库高级查询
+
+        @return: None
+        """
+        """
+        SELECT perm.id AS perm_id
+        FROM perm
+        WHERE perm.name = %(name_1)s
+        """
+        result = orm_json_search(
+            self.db_session,  # type: ignore
+            module=models,
+            query=['Perm'],
+            filter_by={
+                'field': 'Perm.name',
+                'op': 'eq',
+                'value': 'admin'
+            }
+        )
+        logger.debug(f'sql: {result} res: {result.all()}')
+```
+
+* any
+
+```python
+"""
+SELECT `role`.name AS role_name
+FROM `role`
+WHERE EXISTS (SELECT 1
+FROM role_perm, perm
+WHERE `role`.id = role_perm.role_id AND perm.id = role_perm.perm_id AND perm.name = %(name_1)s)
+"""
 result = orm_json_search(
     self.db_session,  # type: ignore
     module=models,
-    query=['User.name'],
+    query=['Role'],
     filter_by={
-        'field': 'User.name',
-        'op': 'eq',  # 'eq', '==', 'equal', 'equals'
+        'field': 'Role.perms',
+        'op': 'any',
+        'value': {
+            'field': 'Perm.name',
+            'op': 'eq',
+            'value': 'can_view'
+        }
+    }
+)
+```
+
+* between
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.id BETWEEN %(id_1)s AND %(id_2)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.id',
+        'op': 'between',
+        'value': [1, 2]
+    }
+)
+```
+
+* contains
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE (perm.name LIKE concat(concat('%%', %(name_1)s), '%%'))
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'contains',
         'value': 'admin'
     }
 )
 ```
-* group_by
-```python
-from service_sqlalchemy.core.shortcuts import orm_json_search
 
+* endswith
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE (perm.name LIKE concat('%%', %(name_1)s))
+"""
 result = orm_json_search(
     self.db_session,  # type: ignore
     module=models,
-    query=[
-        'User.name',
-        {
-            'field': 'User.name',
-            'fn': 'count'
-        }
-    ],
-    group_by=['User.name']
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'endswith',
+        'value': 'view'
+    }
 )
+```
+
+* eq
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name = %(name_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'eq',  # {'eq', '==', 'equal', 'equals'}
+        'value': 'admin'
+    }
+)
+```
+
+* ge
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.id >= %(id_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.id',
+        'op': 'ge',  # {'>=', 'ge', 'gte', 'greater_than_equal', 'greater_than_equals'}
+        'value': 1
+    }
+)
+```
+
+* gt
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.id > %(id_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.id',
+        'op': 'gt',  # {'>', 'gt', 'greater_than'}
+        'value': 1
+    }
+)
+```
+
+* has
+
+```python
+
+```
+
+* icontains
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE lower(perm.name) LIKE lower(%(name_1)s)
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'icontains',
+        'value': 'admin'
+    }
+)
+```
+
+* iendswith
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE lower(perm.name) LIKE lower(%(name_1)s)
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'iendswith',
+        'value': 'view'
+    }
+)
+```
+
+* ilike
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE lower(perm.name) LIKE lower(%(name_1)s)
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ilike',
+        'value': 'can%'
+    }
+)
+```
+
+* in
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.id IN ([POSTCOMPILE_id_1])
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.id',
+        'op': 'in',
+        'value': [1, 2]
+    }
+)
+```
+
+* is
+
+```python
+
+```
+
+* is_not
+
+```python
+
 ```
 
 # 运行服务

@@ -55,19 +55,20 @@ class Search(object):
         @param page: 分页页码
         @param page_size: 分页大小
         """
-        self._module = module
-        self._session = session
+        self._module, self._session = module, session
         self._page, self._page_size = page, page_size
-        having = having or []
-        having = [having] if not isinstance(having, list) else having
-        group_by = group_by or []
-        group_by = [group_by] if not isinstance(group_by, list) else group_by
-        order_by = order_by or []
-        order_by = [order_by] if not isinstance(order_by, list) else order_by
+        join = join or []
+        join = [join] if not isinstance(join, list) else join
         filter_by = filter_by or []
         filter_by = [filter_by] if not isinstance(filter_by, list) else filter_by
         a, o, b = make_filter(*filter_by)
         filter_by = {'a': a, 'o': o, 'b': b}
+        group_by = group_by or []
+        group_by = [group_by] if not isinstance(group_by, list) else group_by
+        having = having or []
+        having = [having] if not isinstance(having, list) else having
+        order_by = order_by or []
+        order_by = [order_by] if not isinstance(order_by, list) else order_by
         schema = SearchSchema(
             query=query, join=join, order_by=order_by, filter_by=filter_by,
             group_by=group_by, having=having, page=page, page_size=page_size
