@@ -24,7 +24,7 @@ class OperatorSchema(BaseModel):
     """ 标准操作模式 """
     field: t.Union[t.Text, FunctionSchema] = Field(description='字段名称')
     op: t.Text = Field(description='操作名称')
-    value: t.Union[t.Text, int, float, bool, t.List, OperatorSchema, FunctionSchema] = Field(description='字段的值')
+    value: t.Union[t.Text, int, float, bool, None, t.List, OperatorSchema, FunctionSchema] = Field(description='字段的值')
     param: t.Optional[t.Dict[t.Text, t.Any]] = Field(description='操作选项', default={})
 
 
