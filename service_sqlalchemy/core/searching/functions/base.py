@@ -6,11 +6,11 @@ from __future__ import annotations
 
 import typing as t
 
-from sqlalchemy.schema import Column
 from sqlalchemy import func as funcs
 from sqlalchemy.sql.functions import GenericFunction
 from service_core.core.decorator import AsLazyProperty
 from sqlalchemy.ext.declarative import declarative_base
+from service_sqlalchemy.core.searching.schemas import FieldTypeEnum
 
 BaseModel = declarative_base()
 
@@ -48,6 +48,7 @@ class BaseFunction(object, metaclass=FunctionMeta):
             func: t.Text,
             model: BaseModel,
             field: t.Union[t.Text, GenericFunction],
+            type: t.Optional[t.Text] = None,
             param: t.Optional[t.Dict[t.Text, t.Any]] = None
     ) -> None:
         """ 初始化实例
@@ -55,12 +56,14 @@ class BaseFunction(object, metaclass=FunctionMeta):
         @param func: 函数名称
         @param model: 模型对象
         @param field: 字段名称
+        @param field: 字段类型
         @param param: 操作选项
         """
         self._func = func
         self._model = model
         self._field = field
         self._param = param or {}
+        self._type = type or FieldTypeEnum.field.value
 
     @AsLazyProperty
     def func(self) -> t.Type[GenericFunction]:
@@ -78,9 +81,15 @@ class BaseFunction(object, metaclass=FunctionMeta):
         raise NotImplementedError
 
     @AsLazyProperty
-    def field(self) -> Column:
+    def field(self) -> t.Any:
         """ 模型的字段
 
         @return: Column
         """
-        return getattr(self._model, self._field) if isinstance(self._field, str) else self._field
+        if isinstance(self._field, str):
+            if self._type == FieldTypeEnum.plain.value:
+                return self._field
+            if self._type == FieldTypeEnum.field.value:
+                return getattr(self._model, self._field)
+        this_is_an_other_type_field = self._field
+        return this_is_an_other_type_field

@@ -11,6 +11,7 @@ from sqlalchemy.sql.functions import GenericFunction
 from sqlalchemy.ext.declarative import declarative_base
 from service_sqlalchemy.exception import ValidationError
 
+from .schemas import FieldTypeEnum
 from .operators import OperatorMeta
 from .functions import FunctionMeta
 
@@ -25,6 +26,7 @@ class FunctionExpression(object):
             fn: t.Text,
             model: BaseModel,
             field: t.Union[t.Text, GenericFunction],
+            type: t.Optional[t.Text] = None,
             param: t.Optional[t.Dict[t.Text, t.Any]] = None
     ) -> None:
         """ 初始化实例
@@ -32,6 +34,7 @@ class FunctionExpression(object):
         @param fn: 函数名称
         @param model: 模型对象
         @param field: 字段名称
+        @param type: 字段类型
         @param param: 函数选项
         """
         try:
@@ -39,9 +42,12 @@ class FunctionExpression(object):
         except KeyError:
             errs = f'invalid function {fn}'
             raise ValidationError(errormsg=errs)
+        param = param or {}
+        type = type or FieldTypeEnum.field.value
         kwargs = {
             'func': fn, 'model': model,
-            'field': field, 'param': param}
+            'field': field, 'type': type,
+            'param': param}
         self._function = Function(**kwargs)
 
     def eval(self) -> GenericFunction:
@@ -61,6 +67,7 @@ class OperatorExpression(object):
             field: t.Union[t.Text, GenericFunction],
             op: t.Text,
             value: t.Any,
+            type: t.Optional[t.Text] = None,
             param: t.Optional[t.Dict[t.Text, t.Any]] = None
     ) -> None:
         """ 初始化实例
@@ -69,6 +76,7 @@ class OperatorExpression(object):
         @param model: 模型对象
         @param field: 字段名称
         @param value: 字段的值
+        @param type: 字段类型
         @param param: 操作选项
         """
         try:
@@ -76,8 +84,11 @@ class OperatorExpression(object):
         except KeyError:
             errs = f'invalid operator {op}'
             raise ValidationError(errormsg=errs)
+        param = param or {}
+        type = type or FieldTypeEnum.field.value
         kwargs = {
             'model': model, 'field': field,
+            'type': type,
             'value': value, 'param': param}
         self._operator = Operator(**kwargs)
 

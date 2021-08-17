@@ -7,14 +7,15 @@ from sqlalchemy.sql.functions import GenericFunction
 from .base import BaseFunction
 
 
-class MeFunction(BaseFunction):
-    """ 返回模型字段自身 """
+class LengthFunction(BaseFunction):
+    """ sqlalchemy.sql.func.length """
 
-    alias = {'me', 'self', 'field'}
+    alias = {'length'}
 
     def eval(self) -> GenericFunction:
         """ 生成的函数
 
         @return: GenericFunction
         """
-        return self.field
+
+        return self.func(self.field, **self._param)

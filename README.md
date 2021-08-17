@@ -45,6 +45,7 @@ SQLALCHEMY:
     └── models
       ├── base.py
       ├── user.py
+      ├── apps.py
       ├── role.py
       ├── perm.py
       ├── role_perm.py
@@ -98,6 +99,36 @@ class User(BaseModel):
     name = sa.Column(sa.String(64), nullable=False, comment='用户名称')
     roles = relationship('Role', secondary=UserRole, back_populates='users')
     perms = relationship('Perm', secondary=UserPerm, back_populates='users')
+```
+
+> project/models/apps.py
+
+```python
+#! -*- coding: utf-8 -*-
+#
+# author: forcemain@163.com
+
+from __future__ import annotations
+
+import sqlalchemy as sa
+
+from sqlalchemy.orm import relationship
+
+from .base import BaseModel
+
+
+class Apps(BaseModel):
+    """ 应用模型 """
+    __tablename__ = 'apps'
+    __table_args__ = (
+        # 字典配置必须放最底部
+        {'comment': '应用表'},
+    )
+
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True, comment='应用ID')
+    name = sa.Column(sa.String(64), nullable=False, comment='应用名称')
+    users = relationship('User')
+    user_id = sa.Column(sa.Integer, sa.ForeignKey('user.id'), nullable=False, comment='用户ID')
 ```
 
 > project/models/role.py
@@ -959,15 +990,52 @@ result = orm_json_search(
 * [has](https://docs.sqlalchemy.org/en/14/orm/internals.html#sqlalchemy.orm.RelationshipProperty.Comparator.has)
 
 ```python
-
+"""
+SELECT apps.id AS apps_id, apps.name AS apps_name, apps.user_id AS apps_user_id
+FROM apps
+WHERE (EXISTS (SELECT 1
+FROM user
+WHERE user.id = apps.user_id AND (user.name LIKE concat('%%', %(name_1)s))))
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Apps'],
+    filter_by={
+        'field': 'Apps.users',
+        'op': 'has',
+        'value': {
+            'field': 'User.name',
+            'op': 'endswith',
+            'value': 'manman'
+        }
+    }
+)
 ```
 
-### 查询排序
+### 基本排序
 
 * order_by
 
 ```python
-
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s ORDER BY perm.name DESC res
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',
+        'value': 'admin'
+    },
+    order_by=[
+        '-Perm.name'
+    ]
+)
 ```
 
 ### 分组查询
@@ -976,8 +1044,8 @@ result = orm_json_search(
 
 ```python
 """
-SELECT `role`.name AS role_name, count(`role`.name) AS count_1
-FROM `role` GROUP BY `role`.name
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 """
 result = orm_json_search(
     self.db_session,  # type: ignore
@@ -985,14 +1053,14 @@ result = orm_json_search(
     query=[
         'Role.name',
         {
-            'field': 'Role.name',
+            'field': 'Role.users',
             'fn': 'count'
         }
     ],
     group_by=[
         {
             'field': 'Role.name',
-            'fn': 'me'  # {'me', 'self', 'field'}
+            'fn': 'field'
         }
     ]
 )
@@ -1002,9 +1070,9 @@ result = orm_json_search(
 
 ```python
 """
-SELECT `role`.name AS role_name, count(`role`.name) AS count_1
-FROM `role` GROUP BY `role`.name
-HAVING count(`role`.name) >= %(count_2)s
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s
 """
 result = orm_json_search(
     self.db_session,  # type: ignore
@@ -1012,20 +1080,20 @@ result = orm_json_search(
     query=[
         'Role.name',
         {
-            'field': 'Role.name',
+            'field': 'Role.users',
             'fn': 'count'
         }
     ],
     group_by=[
         {
             'field': 'Role.name',
-            'fn': 'me'  # {'me', 'self', 'field'}
+            'fn': 'field'
         }
     ],
     having=[
         {
             'field': {
-                'field': 'Role.name',
+                'field': 'Role.users',
                 'fn': 'count'
             },
             'op': 'ge',
@@ -1035,8 +1103,495 @@ result = orm_json_search(
 )
 ```
 
+### 分组排序
+
+* order_by
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) DESC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'field'
+        }
+    ],
+    having=[
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'op': 'ge',
+            'value': 1
+        }
+    ],
+    order_by=[
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'fn': 'desc'
+        }
+    ]
+)
+```
+
 ### 聚合函数
+
+* [count](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.count)
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        'Role.name'
+    ]
+)
+```
+
+* [min](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.min)
+
+```python
+"""
+SELECT min(perm.id) AS min_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': 'Perm.id',
+            'fn': 'min'
+        }
+    ]
+)
+```
+
+* [max](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.max)
+
+```python
+"""
+SELECT max(perm.id) AS max_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': 'Perm.id',
+            'fn': 'max'
+        }
+    ]
+)
+```
+
+* [avg](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.avg)
+
+```python
+"""
+SELECT avg(perm.id) AS avg_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': 'Perm.id',
+            'fn': 'avg'
+        }
+    ]
+)
+```
+
+* [sum](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.sum)
+
+```python
+"""
+SELECT sum(perm.id) AS sum_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': 'Perm.id',
+            'fn': 'sum'
+        }
+    ]
+)
+```
+
+### 分组聚合
+
+* [count](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.count)
+
+```python
+"""
+SELECT perm.name AS perm_name, count(perm.id) AS count_1
+FROM perm GROUP BY perm.name
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': 'Perm.id',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        'Perm.name'
+    ]
+)
+```
+
+* [min](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.min)
+
+```python
+"""
+SELECT perm.name AS perm_name, min(perm.id) AS min_1
+FROM perm GROUP BY perm.name
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': 'Perm.id',
+            'fn': 'min'
+        }
+    ],
+    group_by=[
+        'Perm.name'
+    ]
+)
+```
+
+* [max](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.max)
+
+```python
+"""
+SELECT perm.name AS perm_name, max(perm.id) AS max_1
+FROM perm GROUP BY perm.name
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': 'Perm.id',
+            'fn': 'max'
+        }
+    ],
+    group_by=[
+        'Perm.name'
+    ]
+)
+```
+
+* [avg](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.avg)
+
+```python
+"""
+SELECT perm.name AS perm_name, avg(perm.id) AS avg_1
+FROM perm GROUP BY perm.name
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': 'Perm.id',
+            'fn': 'avg'
+        }
+    ],
+    group_by=[
+        'Perm.name'
+    ]
+)
+```
+
+* [sum](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.sum)
+
+```python
+"""
+SELECT perm.name AS perm_name, sum(perm.id) AS sum_1
+FROM perm GROUP BY perm.name
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': 'Perm.id',
+            'fn': 'sum'
+        }
+    ],
+    group_by=[
+        'Perm.name'
+    ]
+)
+```
 
 ### 连接查询
 
+* join
+
+```python
+"""
+SELECT user.name AS user_name, apps.name AS apps_name
+FROM user INNER JOIN apps ON user.id = apps.id
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'User.name',
+        'Apps.name',
+    ],
+    join=[
+        {
+            'model': 'Apps',
+            'must': {
+                'field': {
+                    'field': 'User.id',
+                    'fn': 'me'
+                },
+                'op': 'eq',
+                'value': {
+                    'field': 'Apps.id',
+                    'fn': 'me'
+                }
+            },
+            'param': {
+                'isouter': False
+            }
+        }
+    ]
+)
+```
+
 ### 分页查询
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+ LIMIT %(param_1)s, %(param_2)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    page=2, page_size=2
+)
+```
+
+### 其它函数
+
+* [char_length](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.char_length)
+
+```python
+"""
+SELECT perm.name AS perm_name, char_length(perm.name) AS char_length_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': 'Perm.name',
+            'fn': 'char_length'
+        }
+    ]
+)
+```
+
+* [concat](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.concat)
+
+```python
+"""
+SELECT concat(perm.name, %(concat_2)s, perm.id) AS concat_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': [
+                {
+                    'field': 'Perm.name',
+                    'fn': 'field'
+                },
+                {
+                    'type': 'plain',
+                    'field': '-',
+                    'fn': 'plain'  # {'me', 'self', 'plain'}
+                },
+                {
+                    'field': 'Perm.id',
+                    'fn': 'field'
+                },
+            ],
+            'fn': 'concat'
+        }
+    ]
+)
+```
+
+* [coalesce](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.coalesce)
+
+```python
+"""
+SELECT perm.name AS perm_name, coalesce(perm.name, %(coalesce_2)s) AS coalesce_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': [
+                {
+                    'field': 'Perm.name',
+                    'fn': 'field'
+                },
+                {
+                    'type': 'plain',
+                    'field': 'N/A',
+                    'fn': 'plain'  # {'me', 'self', 'plain'}
+                }
+            ],
+            'fn': 'coalesce'
+        }
+    ]
+)
+```
+
+* substring
+
+```python
+"""
+SELECT perm.name AS perm_name, substring(perm.name, %(substring_2)s, %(substring_3)s) AS substring_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': [
+                {
+                    'field': 'Perm.name',
+                    'fn': 'field'
+                },
+                {
+                    'type': 'plain',
+                    'field': 1,
+                    'fn': 'plain'
+                },
+                {
+                    'type': 'plain',
+                    'field': 3,
+                    'fn': 'plain'
+                },
+            ],
+            'fn': 'substring'
+        }
+    ]
+)
+```
+
+* substring_index
+
+```python
+"""
+sql: SELECT perm.name AS perm_name, substring(perm.name, %(substring_2)s, substring_index(perm.name, %(substring_index_1)s, %(substring_index_2)s)) AS substring_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Perm.name',
+        {
+            'field': [
+                {
+                    'field': 'Perm.name',
+                    'fn': 'field'
+                },
+                {
+                    'type': 'plain',
+                    'field': 1,
+                    'fn': 'plain'
+                },
+                {
+                    'type': 'plain',
+                    'field': {
+                        'field': [
+                            {
+                                'field': 'Perm.name',
+                                'fn': 'field'
+                            },
+                            {
+                                'type': 'plain',
+                                'field': '_',
+                                'fn': 'plain'
+                            },
+                            {
+                                'type': 'plain',
+                                'field': 1,
+                                'fn': 'plain'
+                            }
+                        ],
+                        'fn': 'substring_index'
+                    },
+                    'fn': 'plain'
+                },
+            ],
+            'fn': 'substring'
+        }
+    ]
+)
+```

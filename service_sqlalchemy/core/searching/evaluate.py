@@ -14,6 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from service_sqlalchemy.exception import ValidationError
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
+from .schemas import FieldTypeEnum
 from .expresss import OperatorExpression
 from .expresss import FunctionExpression
 
@@ -38,15 +39,25 @@ def load_orm_class(
         errs = f'{field} must be [Model].[Field]'
         raise ValidationError(errormsg=errs)
     model_name, field_name = field.rsplit('.', 1)
-    order_name = {'-': 'desc', '+': 'asc'}.get(model_name[0], None)
-    field = getattr(getattr(module, model_name), field_name)
-    return getattr(field, order_name) if order_name else field
+    order_maps = {'-': 'desc', '+': 'asc'}
+    order_keys = tuple(order_maps.keys())
+    if not model_name.startswith(order_keys):
+        order_name = None
+    else:
+        order_type = model_name[0]
+        model_name = model_name[1:]
+        order_name = order_maps.get(order_type, None)
+    model = getattr(module, model_name)
+    field = getattr(model, field_name)
+    if order_name is None: return field
+    return getattr(field, order_name)()
 
 
 def eval_operator(
         *,
         module: ModuleType,
         field: t.Text,
+        type: t.Text,
         op: t.Text,
         value: t.Any,
         param: t.Optional[t.Dict[t.Text, t.Any]] = None
@@ -55,6 +66,7 @@ def eval_operator(
 
     @param module: 模块对象
     @param field: 字段名称
+    @param type: 字段类型
     @param op: 操作名称
     @param value: 字段的值
     @param param: 操作选项
@@ -67,6 +79,7 @@ def eval_operator(
         field_name = eval_operator(
             module=module,
             field=field['field'],
+            type=field['type'],
             op=field['op'],
             value=field['value'],
             param=field.get('param', {}) or {}
@@ -75,6 +88,7 @@ def eval_operator(
         field_name = eval_function(
             module=module,
             field=field['field'],
+            type=field['type'],
             fn=field['fn'],
             param=field.get('parm', {}) or {}
         )
@@ -82,6 +96,7 @@ def eval_operator(
         value = eval_operator(
             module=module,
             field=value['field'],
+            type=field['type'],
             op=value['op'],
             value=value['value'],
             param=value.get('param', {}) or {}
@@ -90,6 +105,7 @@ def eval_operator(
         value = eval_function(
             module=module,
             field=value['field'],
+            type=field['type'],
             fn=value['fn'],
             param=value.get('parm', {}) or {}
         )
@@ -97,8 +113,8 @@ def eval_operator(
         model_name, field_name = field.rsplit('.', 1)
         model = getattr(module, model_name)
     operator_expression = OperatorExpression(
-        model=model, field=field_name, op=op,
-        param=param, value=value
+        model=model, field=field_name, type=type,
+        op=op, param=param, value=value
     )
     return operator_expression.expr()
 
@@ -120,6 +136,7 @@ def eval_join(
         field = eval_operator(
             module=module,
             field=join['must']['field'],
+            type=join['must']['type'],
             op=join['must']['op'],
             value=join['must']['value'],
             param=join['must'].get('param', {}) or {}
@@ -172,12 +189,12 @@ def eval_filter(
         a = eval_operator(
             module=module,
             field=a['field'], op=a['op'],
-            value=a['value'],
+            type=a['type'], value=a['value'],
             param=a.get('param', {}) or {}
         )
     if isinstance(a, dict) and 'fn' in a:
         a = eval_function(
-            module=module,
+            module=module, type=a['type'],
             field=a['field'], fn=a['fn'],
             param=a.get('param', {}) or {}
         )
@@ -185,11 +202,11 @@ def eval_filter(
         b = eval_operator(
             module=module,
             field=b['field'], op=b['op'],
-            value=b['value'],
+            type=b['type'], value=b['value'],
             param=b.get('param', {}) or {})
     if isinstance(b, dict) and 'fn' in b:
         b = eval_function(
-            module=module,
+            module=module, type=b['type'],
             field=b['field'], fn=b['fn'],
             param=b.get('param', {}) or {}
         )
@@ -199,6 +216,7 @@ def eval_filter(
 def eval_function(
         *, module: ModuleType,
         field: t.Text,
+        type: t.Text,
         fn: t.Text,
         param: t.Optional[t.Dict[t.Text, t.Any]] = None
 ) -> GenericFunction:
@@ -206,22 +224,34 @@ def eval_function(
 
     @param module: 模块对象
     @param field: 字段名称
+    @param type: 字段类型
     @param fn: 函数名称
     @param param: 函数选项
     @return: GenericFunction
     """
-    param = param or {}
-    model_name, field_name = field.rsplit('.', 1)
-    model = getattr(module, model_name)
+    param, model, field_name = param or {}, None, None
+    field_type = FieldTypeEnum.field.value
+    if isinstance(field, str) and type == field_type:
+        model_name, field_name = field.rsplit('.', 1)
+        model = getattr(module, model_name)
+    plain_type = FieldTypeEnum.plain.value
+    if isinstance(field, str) and type == plain_type:
+        field_name = field
+    if isinstance(field, list):
+        field_name = [eval_function(
+            module=module, type=f['type'],
+            field=f['field'], fn=f['fn'],
+            param=f.get('parm', {}) or {}
+        ) for f in field]
     if isinstance(field, dict) and 'fn' in field:
         field_name = eval_function(
-            module=module,
-            field=field['field'],
-            fn=field['fn'],
+            module=module, type=field['type'],
+            field=field['field'], fn=field['fn'],
             param=field.get('parm', {}) or {}
         )
     function_expression = FunctionExpression(
-        fn=fn, model=model, field=field_name, param=param
+        fn=fn, model=model, type=type,
+        field=field_name, param=param
     )
     return function_expression.eval()
 
@@ -245,12 +275,10 @@ def eval_fields(
             )
             result.append(field)
         if isinstance(query, dict):
-            fn = query['fn']
-            field = query['field']
-            param = query.get('param', {}) or {}
             field = eval_function(
-                module=module, field=field,
-                fn=fn, param=param
+                module=module, type=query['type'],
+                field=query['field'], fn=query['fn'],
+                param=query.get('param', {}) or {}
             )
             result.append(field)
     return result
@@ -271,7 +299,7 @@ def eval_having(
     for having in havings:
         if isinstance(having, dict) and 'op' in having:
             field = eval_operator(
-                module=module,
+                module=module, type=having['type'],
                 field=having['field'], op=having['op'],
                 value=having['value'],
                 param=having.get('param', {}) or {}
@@ -279,9 +307,8 @@ def eval_having(
             result.append(field)
         if isinstance(having, dict) and 'fn' in having:
             field = eval_function(
-                module=module,
-                field=having['field'],
-                fn=having['fn'],
+                module=module, type=having['type'],
+                field=having['field'], fn=having['fn'],
                 param=having.get('param', {}) or {}
             )
             result.append(field)

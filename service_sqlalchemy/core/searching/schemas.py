@@ -6,13 +6,21 @@ from __future__ import annotations
 
 import typing as t
 
+from enum import Enum
 from pydantic import BaseModel
 from pydantic.fields import Field
 
 
+class FieldTypeEnum(str, Enum):
+    """ 字段类型枚举 """
+    field = 'field'
+    plain = 'plain'
+
+
 class FunctionSchema(BaseModel):
     """ 标准函数模式 """
-    field: t.Union[t.Text, FunctionSchema] = Field(description='字段名称')
+    field: t.Union[t.Text, FunctionSchema, t.List[FunctionSchema]] = Field(description='字段名称')
+    type: t.Optional[FieldTypeEnum] = Field(description='字段类型', default=FieldTypeEnum.field)
     fn: t.Text = Field(description='函数名称')
     param: t.Optional[t.Dict[t.Text, t.Any]] = Field(description='函数选项', default={})
 
@@ -23,6 +31,7 @@ FunctionSchema.update_forward_refs()
 class OperatorSchema(BaseModel):
     """ 标准操作模式 """
     field: t.Union[t.Text, FunctionSchema] = Field(description='字段名称')
+    type: t.Optional[FieldTypeEnum] = Field(description='字段类型', default=FieldTypeEnum.field)
     op: t.Text = Field(description='操作名称')
     value: t.Union[t.Text, int, float, bool, None, t.List, OperatorSchema, FunctionSchema] = Field(description='字段的值')
     param: t.Optional[t.Dict[t.Text, t.Any]] = Field(description='操作选项', default={})
