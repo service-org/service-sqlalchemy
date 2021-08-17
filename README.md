@@ -1547,7 +1547,7 @@ result = orm_json_search(
 
 ```python
 """
-sql: SELECT perm.name AS perm_name, substring(perm.name, %(substring_2)s, substring_index(perm.name, %(substring_index_1)s, %(substring_index_2)s)) AS substring_1
+SELECT perm.name AS perm_name, substring_index(perm.name, %(substring_index_2)s, %(substring_index_3)s) AS substring_index_1
 FROM perm
 """
 result = orm_json_search(
@@ -1563,34 +1563,16 @@ result = orm_json_search(
                 },
                 {
                     'type': 'plain',
-                    'field': 1,
+                    'field': '_',
                     'fn': 'plain'
                 },
                 {
                     'type': 'plain',
-                    'field': {
-                        'field': [
-                            {
-                                'field': 'Perm.name',
-                                'fn': 'field'
-                            },
-                            {
-                                'type': 'plain',
-                                'field': '_',
-                                'fn': 'plain'
-                            },
-                            {
-                                'type': 'plain',
-                                'field': 1,
-                                'fn': 'plain'
-                            }
-                        ],
-                        'fn': 'substring_index'
-                    },
+                    'field': 1,
                     'fn': 'plain'
-                },
+                }
             ],
-            'fn': 'substring'
+            'fn': 'substring_index'
         }
     ]
 )
