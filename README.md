@@ -947,3 +947,8 @@ result = orm_json_search(
     ]
 )
 ```
+
+* group_by
+```python
+
+```

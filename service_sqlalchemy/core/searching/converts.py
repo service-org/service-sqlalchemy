@@ -16,6 +16,7 @@ def convert_filter(filters: t.List) -> t.Dict[t.Text, t.Any]:
     @return: t.Dict[t.Text, t.Any]
     """
     result = {}
+    if not filters: return result
     a = result.setdefault('a', filters[0])
     o = result.setdefault('o', filters[1])
     b = result.setdefault('b', filters[2])
