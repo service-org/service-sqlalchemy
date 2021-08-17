@@ -18,11 +18,13 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from .evaluate import eval_join
 from .evaluate import eval_query
 from .schemas import SearchSchema
+from .schemas import FilterSchema
 from .evaluate import make_filter
 from .evaluate import eval_filter
 from .evaluate import eval_having
 from .evaluate import eval_order_by
 from .evaluate import eval_group_by
+from .converts import convert_filter
 
 BaseModel = declarative_base()
 
@@ -63,7 +65,7 @@ class Search(object):
         filter_by = filter_by or []
         if not isinstance(filter_by, list):
             filter_by = [filter_by]
-        self._filter_by = make_filter(*filter_by)
+        self._filter_by = filter_by
         group_by = group_by or []
         if not isinstance(group_by, list):
             group_by = [group_by]
@@ -104,7 +106,12 @@ class Search(object):
 
         @return: BooleanClauseList
         """
-        filters = self._filter_by
+        # 整理成嵌套列表
+        # 1.用于简化配置
+        # 2.用于生成查询
+        filters = make_filter(*self._filter_by)
+        # 验证嵌套的数据
+        FilterSchema(**convert_filter(filters))
         return eval_filter(module=self._module, filters=filters)
 
     @AsLazyProperty
