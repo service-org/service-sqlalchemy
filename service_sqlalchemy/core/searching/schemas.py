@@ -52,7 +52,6 @@ class SearchSchema(BaseModel):
     """ 高级查询模式 """
     query: t.List[t.Union[t.Text, FunctionSchema]] = Field(description='查询字段')
     join: t.Optional[t.List[JoinSchema]] = Field(description='JOIN查询', default=[])
-    filter_by: FilterSchema = Field(description='过滤条件', default=[])
     group_by: t.Optional[t.List[t.Union[t.Text, FunctionSchema]]] = Field(description='分组字段', default=[])
     having: t.List[OperatorSchema] = Field(description='分组过滤', default=[])
     order_by: t.List[t.Union[t.Text, FunctionSchema]] = Field(description='排序字段', default=[])

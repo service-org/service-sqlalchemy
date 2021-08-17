@@ -163,7 +163,7 @@ def eval_filter(
     """
     if not filters:
         return and_()
-    (a, o, b), c = filters, []
+    a, o, b = filters
     if isinstance(a, list):
         a = eval_filter(module=module, filters=a)
     if isinstance(b, list):
@@ -175,29 +175,25 @@ def eval_filter(
             value=a['value'],
             param=a.get('param', {}) or {}
         )
-        c.append(a)
     if isinstance(a, dict) and 'fn' in a:
         a = eval_function(
             module=module,
             field=a['field'], fn=a['fn'],
             param=a.get('param', {}) or {}
         )
-        c.append(a)
     if isinstance(b, dict) and 'op' in b:
         b = eval_operator(
             module=module,
             field=b['field'], op=b['op'],
             value=b['value'],
             param=b.get('param', {}) or {})
-        c.append(b)
     if isinstance(b, dict) and 'fn' in b:
         b = eval_function(
             module=module,
             field=b['field'], fn=b['fn'],
             param=b.get('param', {}) or {}
         )
-        c.append(b)
-    return condition_type[o](*c)
+    return condition_type[o](a, b)
 
 
 def eval_function(

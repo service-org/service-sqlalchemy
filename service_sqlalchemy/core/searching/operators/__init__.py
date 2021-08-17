@@ -16,7 +16,6 @@ from ._between import BetweenOperator
 
 from ._like import LikeOperator
 from ._ilike import ILikeOperator
-from ._match import MatchOperator
 from ._startswith import StartsWithOperator
 from ._istartswith import IStartsWithOperator
 from ._endswith import EndsWithOperator

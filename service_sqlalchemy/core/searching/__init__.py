@@ -58,21 +58,26 @@ class Search(object):
         self._module, self._session = module, session
         self._page, self._page_size = page, page_size
         join = join or []
-        join = [join] if not isinstance(join, list) else join
+        if not isinstance(join, list):
+            join = [join]
         filter_by = filter_by or []
-        filter_by = [filter_by] if not isinstance(filter_by, list) else filter_by
-        a, o, b = make_filter(*filter_by)
-        filter_by = {'a': a, 'o': o, 'b': b}
+        if not isinstance(filter_by, list):
+            filter_by = [filter_by]
+        self._filter_by = make_filter(*filter_by)
         group_by = group_by or []
-        group_by = [group_by] if not isinstance(group_by, list) else group_by
+        if not isinstance(group_by, list):
+            group_by = [group_by]
         having = having or []
-        having = [having] if not isinstance(having, list) else having
+        if not isinstance(having, list):
+            having = [having]
         order_by = order_by or []
-        order_by = [order_by] if not isinstance(order_by, list) else order_by
-        schema = SearchSchema(
-            query=query, join=join, order_by=order_by, filter_by=filter_by,
-            group_by=group_by, having=having, page=page, page_size=page_size
-        )
+        if not isinstance(order_by, list):
+            order_by = [order_by]
+        schema = SearchSchema(query=query, join=join,
+                              order_by=order_by,
+                              group_by=group_by,
+                              having=having, page=page,
+                              page_size=page_size)
         self._init_data = schema.dict()
 
     @AsLazyProperty
@@ -99,9 +104,7 @@ class Search(object):
 
         @return: BooleanClauseList
         """
-        filters = [self._init_data['filter_by']['a'],
-                   self._init_data['filter_by']['o'],
-                   self._init_data['filter_by']['b']]
+        filters = self._filter_by
         return eval_filter(module=self._module, filters=filters)
 
     @AsLazyProperty

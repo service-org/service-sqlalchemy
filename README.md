@@ -358,7 +358,15 @@ import sqlalchemy_utils as su
 
 :point_right: core alembic --name test upgrade head
 
-# 扩展查询
+# 运行服务
+
+> core start facade --debug
+
+# 运行调试
+
+> core debug --port `port`
+
+# 构造查询
 
 > `orm_json_search`函数可将json转为orm查询表达式,支持高级查询语句的构建,更多功能等你挖掘~
 
@@ -774,10 +782,166 @@ result = orm_json_search(
 )
 ```
 
-# 运行服务
+* [like](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.like)
 
-> core start facade --debug
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name LIKE %(name_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'like',
+        'value': 'can%'
+    }
+)
+```
 
-# 运行调试
+* [lt](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__lt__)
 
-> core debug --port `port`
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.id < %(id_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.id',
+        'op': 'lt',  # {'<', 'lt', 'less_than'}
+        'value': 1
+    }
+)
+```
+
+* [ne](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__ne__)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s 
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',  # {'ne', '!=', 'notequal', 'not_equal', 'notequals', 'not_equals'}
+        'value': 'admin'
+    }
+)
+```
+
+* [not_in](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.notin_)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE (perm.id NOT IN ([POSTCOMPILE_id_1]))
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.id',
+        'op': 'notin',  # {'notin', 'not_in'}
+        'value': [1]
+    }
+)
+```
+
+* [startswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.startswith)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE (perm.name LIKE concat(%(name_1)s, '%%'))
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'startswith',  # {'notin', 'not_in'}
+        'value': 'can'
+    }
+)
+```
+
+* and
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.id = %(id_1)s AND perm.name IS NOT NULL AND perm.name != %(name_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by=[
+        {
+            'field': 'Perm.id',
+            'op': 'eq',
+            'value': 1
+        },
+        'and',
+        [
+            {
+                'field': 'Perm.name',
+                'op': 'isnot',
+                'value': None
+            },
+            'and',
+            {
+                'field': 'Perm.name',
+                'op': 'ne',
+                'value': ''
+            },
+        ]
+    ]
+)
+```
+
+* or
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name IS NULL OR perm.name = %(name_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by=[
+        {
+            'field': 'Perm.name',
+            'op': 'is',
+            'value': None
+        },
+        'or',
+        {
+            'field': 'Perm.name',
+            'op': 'eq',
+            'value': ''
+        },
+    ]
+)
+```
