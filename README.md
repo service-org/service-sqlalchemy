@@ -6,7 +6,7 @@
 
 # [注意事项](https://specs.openstack.org/openstack/openstack-specs/specs/eventlet-best-practices.html#database-drivers)
 
-> 如下为已知在Eventlet协程下不会出现死锁的db driver, 数据库选型时请注意
+> 如下为已知在Eventlet协程下不会出现死锁的数据库驱动, 选型时请注意
 
 - [pysqlite](https://docs.sqlalchemy.org/en/14/dialects/sqlite.html#module-sqlalchemy.dialects.sqlite.pysqlite)
 - [pymysql](https://docs.sqlalchemy.org/en/14/dialects/mysql.html#module-sqlalchemy.dialects.mysql.pymysql)
