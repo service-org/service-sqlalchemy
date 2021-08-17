@@ -331,12 +331,12 @@ service = Service()
 ```text
 ├── ...........
 ├── alembic.ini
-├── alembic
-└── test
-    ├── script.py.mako
-    ├── env.py
-    ├── README
-    └── versions
+└── alembic
+    └── test
+        ├── script.py.mako
+        ├── env.py
+        ├── README
+        └── versions
 ```
 
 :point_right: core alembic --name test revision --autogenerate -m "init"
