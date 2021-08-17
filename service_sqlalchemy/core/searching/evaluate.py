@@ -21,6 +21,9 @@ from .expresss import FunctionExpression
 BaseModel = declarative_base()
 condition_type = {'and': and_, 'or': or_}
 
+field_type = FieldTypeEnum.field.value
+plain_type = FieldTypeEnum.plain.value
+
 
 def load_orm_class(
         *,
@@ -77,36 +80,30 @@ def eval_operator(
     field_name = None
     if isinstance(field, dict) and 'op' in field:
         field_name = eval_operator(
-            module=module,
-            field=field['field'],
-            type=field['type'],
-            op=field['op'],
-            value=field['value'],
+            module=module, field=field['field'],
+            op=field['op'], value=field['value'],
+            type=field.get('type', field_type),
             param=field.get('param', {}) or {}
         )
     if isinstance(field, dict) and 'fn' in field:
         field_name = eval_function(
             module=module,
-            field=field['field'],
-            type=field['type'],
-            fn=field['fn'],
+            field=field['field'], fn=field['fn'],
+            type=field.get('type', field_type),
             param=field.get('parm', {}) or {}
         )
     if isinstance(value, dict) and 'op' in value:
         value = eval_operator(
-            module=module,
-            field=value['field'],
-            type=field['type'],
-            op=value['op'],
-            value=value['value'],
+            module=module, field=value['field'],
+            op=value['op'], value=value['value'],
+            type=field.get('type', field_type),
             param=value.get('param', {}) or {}
         )
     if isinstance(value, dict) and 'fn' in value:
         value = eval_function(
             module=module,
-            field=value['field'],
-            type=field['type'],
-            fn=value['fn'],
+            field=value['field'], fn=value['fn'],
+            type=field.get('type', field_type),
             param=value.get('parm', {}) or {}
         )
     if isinstance(field, str):
@@ -133,13 +130,12 @@ def eval_join(
     result = []
     for join in joins:
         model = load_orm_class(module=module, field=join['model'])
+        must = join.get('must', {})
         field = eval_operator(
-            module=module,
-            field=join['must']['field'],
-            type=join['must']['type'],
-            op=join['must']['op'],
-            value=join['must']['value'],
-            param=join['must'].get('param', {}) or {}
+            module=module, field=must['field'],
+            op=must['op'], value=must['value'],
+            type=must.get('type', field_type),
+            param=must.get('param', {}) or {}
         )
         result.append((model, field, join['param']))
     return result
@@ -187,27 +183,29 @@ def eval_filter(
         b = eval_filter(module=module, filters=b)
     if isinstance(a, dict) and 'op' in a:
         a = eval_operator(
-            module=module,
-            field=a['field'], op=a['op'],
-            type=a['type'], value=a['value'],
+            module=module, field=a['field'],
+            op=a['op'], value=a['value'],
+            type=a.get('type', field_type),
             param=a.get('param', {}) or {}
         )
     if isinstance(a, dict) and 'fn' in a:
         a = eval_function(
-            module=module, type=a['type'],
+            module=module,
             field=a['field'], fn=a['fn'],
+            type=a.get('type', field_type),
             param=a.get('param', {}) or {}
         )
     if isinstance(b, dict) and 'op' in b:
         b = eval_operator(
-            module=module,
-            field=b['field'], op=b['op'],
-            type=b['type'], value=b['value'],
+            module=module, field=b['field'],
+            op=b['op'], value=b['value'],
+            type=b.get('type', field_type),
             param=b.get('param', {}) or {})
     if isinstance(b, dict) and 'fn' in b:
         b = eval_function(
-            module=module, type=b['type'],
+            module=module,
             field=b['field'], fn=b['fn'],
+            type=b.get('type', field_type),
             param=b.get('param', {}) or {}
         )
     return condition_type[o](a, b)
@@ -230,23 +228,23 @@ def eval_function(
     @return: GenericFunction
     """
     param, model, field_name = param or {}, None, None
-    field_type = FieldTypeEnum.field.value
     if isinstance(field, str) and type == field_type:
         model_name, field_name = field.rsplit('.', 1)
         model = getattr(module, model_name)
-    plain_type = FieldTypeEnum.plain.value
     if isinstance(field, str) and type == plain_type:
         field_name = field
     if isinstance(field, list):
         field_name = [eval_function(
-            module=module, type=f['type'],
+            module=module,
             field=f['field'], fn=f['fn'],
+            type=f.get('type', field_type),
             param=f.get('parm', {}) or {}
         ) for f in field]
     if isinstance(field, dict) and 'fn' in field:
         field_name = eval_function(
-            module=module, type=field['type'],
+            module=module,
             field=field['field'], fn=field['fn'],
+            type=field.get('type', field_type),
             param=field.get('parm', {}) or {}
         )
     function_expression = FunctionExpression(
@@ -276,8 +274,9 @@ def eval_fields(
             result.append(field)
         if isinstance(query, dict):
             field = eval_function(
-                module=module, type=query['type'],
+                module=module,
                 field=query['field'], fn=query['fn'],
+                type=query.get('type', field_type),
                 param=query.get('param', {}) or {}
             )
             result.append(field)
@@ -299,16 +298,17 @@ def eval_having(
     for having in havings:
         if isinstance(having, dict) and 'op' in having:
             field = eval_operator(
-                module=module, type=having['type'],
-                field=having['field'], op=having['op'],
-                value=having['value'],
+                module=module, field=having['field'],
+                op=having['op'], value=having['value'],
+                type=having.get('type', field_type),
                 param=having.get('param', {}) or {}
             )
             result.append(field)
         if isinstance(having, dict) and 'fn' in having:
             field = eval_function(
-                module=module, type=having['type'],
+                module=module,
                 field=having['field'], fn=having['fn'],
+                type=having.get('type', field_type),
                 param=having.get('param', {}) or {}
             )
             result.append(field)

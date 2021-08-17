@@ -1391,12 +1391,12 @@ result = orm_json_search(
             'must': {
                 'field': {
                     'field': 'User.id',
-                    'fn': 'me'
+                    'fn': 'field'
                 },
                 'op': 'eq',
                 'value': {
                     'field': 'Apps.id',
-                    'fn': 'me'
+                    'fn': 'field'
                 }
             },
             'param': {
