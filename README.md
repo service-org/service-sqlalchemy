@@ -881,6 +881,7 @@ result = orm_json_search(
 ```
 
 * [functions.distinct](#sqlalchemy.sql.expression.distinct)
+
 ```python
 
 ```
@@ -1142,7 +1143,7 @@ result = orm_json_search(
 
 ### 基本排序
 
-* [order_by asc](#)
+* [order by asc](#)
 
 ```python
 """
@@ -1165,7 +1166,7 @@ result = orm_json_search(
 )
 ```
 
-* [order_by desc](#)
+* [order by desc](#)
 
 ```python
 """
@@ -1188,7 +1189,7 @@ result = orm_json_search(
 )
 ```
 
-* [order_by operators.asc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.asc)
+* [order by operators.asc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.asc)
 
 ```python
 """
@@ -1214,7 +1215,7 @@ result = orm_json_search(
 )
 ```
 
-* [order_by operators.desc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc)
+* [order by operators.desc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc)
 
 ```python
 """
@@ -1240,7 +1241,7 @@ result = orm_json_search(
 )
 ```
 
-* [order_by functions.asc](#sqlalchemy.sql.expression.asc)
+* [order by functions.asc](#sqlalchemy.sql.expression.asc)
 
 ```python
 """
@@ -1266,7 +1267,7 @@ result = orm_json_search(
 )
 ```
 
-* [order_by functions.desc](#sqlalchemy.sql.expression.desc)
+* [order by functions.desc](#sqlalchemy.sql.expression.desc)
 
 ```python
 """
@@ -1294,7 +1295,7 @@ result = orm_json_search(
 
 ### 分组查询
 
-* [group_by](#)
+* [group by](#)
 
 ```python
 """
@@ -1326,7 +1327,7 @@ result = orm_json_search(
 """
 SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
 FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
-HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) = %(count_2)s OR count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) = %(count_3)s
 """
 result = orm_json_search(
     self.db_session,  # type: ignore
@@ -1350,16 +1351,25 @@ result = orm_json_search(
                 'field': 'Role.users',
                 'fn': 'count'
             },
-            'op': 'ge',
+            'op': 'eq',
+            'value': 0
+        },
+        'or',
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'op': 'eq',
             'value': 1
-        }
+        },
     ]
 )
 ```
 
 ### 分组排序
 
-* [group by having order_by asc](#)
+* [group by having order by asc](#)
 
 ```python
 """
@@ -1399,7 +1409,7 @@ result = orm_json_search(
 )
 ```
 
-* [group by having order_by desc](#)
+* [group by having order by desc](#)
 
 ```python
 """
@@ -1439,7 +1449,7 @@ result = orm_json_search(
 )
 ```
 
-* [group by having order_by operators.asc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.asc)
+* [group by having order by operators.asc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.asc)
 
 ```python
 """
@@ -1482,7 +1492,7 @@ result = orm_json_search(
 )
 ```
 
-* [group by having order_by operators.desc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc)
+* [group by having order by operators.desc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc)
 
 ```python
 """
@@ -1525,7 +1535,7 @@ result = orm_json_search(
 )
 ```
 
-* [group by having order_by functions.asc](#sqlalchemy.sql.expression.asc)
+* [group by having order by functions.asc](#sqlalchemy.sql.expression.asc)
 
 ```python
 """
@@ -1568,7 +1578,7 @@ result = orm_json_search(
 )
 ```
 
-* [group by having order_by functions.desc](#sqlalchemy.sql.expression.desc)
+* [group by having order by functions.desc](#sqlalchemy.sql.expression.desc)
 
 ```python
 """
@@ -1885,60 +1895,9 @@ result = orm_json_search(
 )
 ```
 
-### 其它函数
+### [SQL函数](https://docs.sqlalchemy.org/en/14/core/functions.html)
 
-* [functions.char_length](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.char_length)
-
-```python
-"""
-SELECT perm.name AS perm_name, char_length(perm.name) AS char_length_1
-FROM perm
-"""
-result = orm_json_search(
-    self.db_session,  # type: ignore
-    module=models,
-    query=[
-        'Perm.name',
-        {
-            'field': 'Perm.name',
-            'fn': 'char_length'
-        }
-    ]
-)
-```
-
-* [functions.concat](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.concat)
-
-```python
-"""
-SELECT concat(perm.name, %(concat_2)s, perm.id) AS concat_1
-FROM perm
-"""
-result = orm_json_search(
-    self.db_session,  # type: ignore
-    module=models,
-    query=[
-        {
-            'field': [
-                {
-                    'field': 'Perm.name',
-                    'fn': 'field'
-                },
-                {
-                    'type': 'plain',
-                    'field': '-',
-                    'fn': 'plain'  # {'me', 'self', 'plain'}
-                },
-                {
-                    'field': 'Perm.id',
-                    'fn': 'field'
-                },
-            ],
-            'fn': 'concat'
-        }
-    ]
-)
-```
+:exclamation: 所有可通过sqlalchemy.func调用的Sql函数均可用Json描述,用法同上
 
 * [functions.coalesce](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.coalesce)
 
@@ -1970,7 +1929,9 @@ result = orm_json_search(
 )
 ```
 
-* [functions.substring]()
+### 特殊函数
+
+:exclamation: plain和field,某些时候需要函数的执行结果为字段对象自身或原始数据
 
 ```python
 """
@@ -2004,40 +1965,3 @@ result = orm_json_search(
     ]
 )
 ```
-
-* [functions.substring_index]()
-
-```python
-"""
-SELECT perm.name AS perm_name, substring_index(perm.name, %(substring_index_2)s, %(substring_index_3)s) AS substring_index_1
-FROM perm
-"""
-result = orm_json_search(
-    self.db_session,  # type: ignore
-    module=models,
-    query=[
-        'Perm.name',
-        {
-            'field': [
-                {
-                    'field': 'Perm.name',
-                    'fn': 'field'
-                },
-                {
-                    'type': 'plain',
-                    'field': '_',
-                    'fn': 'plain'
-                },
-                {
-                    'type': 'plain',
-                    'field': 1,
-                    'fn': 'plain'
-                }
-            ],
-            'fn': 'substring_index'
-        }
-    ]
-)
-```
-
-* [functions.substring_index]()

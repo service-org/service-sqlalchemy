@@ -2,16 +2,15 @@
 #
 # author: forcemain@163.com
 
-
 from sqlalchemy.sql.functions import GenericFunction
 
 from .base import BaseFunction
 
 
-class SubstringFunction(BaseFunction):
-    """ sqlalchemy.sql.func.substring """
+class DefaultFunction(BaseFunction):
+    """ https://docs.sqlalchemy.org/en/14/core/functions.html """
 
-    alias = {'substring'}
+    alias = {'default'}
 
     def eval(self) -> GenericFunction:
         """ 生成的函数

@@ -141,7 +141,9 @@ def eval_join(
     """
     result = []
     for join in joins:
-        model = load_orm_class(module=module, field=join['model'])
+        model = load_orm_class(
+            module=module, field=join['model']
+        )
         must = join.get('must', {}) or {}
         join_param = join.get('param', {}) or {}
         if must and 'op' in must:

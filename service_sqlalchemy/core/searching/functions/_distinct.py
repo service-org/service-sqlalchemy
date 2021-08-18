@@ -2,7 +2,7 @@
 #
 # author: forcemain@163.com
 
-from sqlalchemy import distinct
+import sqlalchemy as sa
 from sqlalchemy.sql.functions import GenericFunction
 
 from .base import BaseFunction
@@ -18,4 +18,4 @@ class DistinctFunction(BaseFunction):
 
         @return: GenericFunction
         """
-        return distinct(self.field)
+        return sa.distinct(self.field)

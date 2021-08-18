@@ -164,7 +164,7 @@ class Search(object):
         if self.group_by:
             queryset = queryset.group_by(*self.group_by)
         if self._having:
-            queryset = queryset.having(*self.having)
+            queryset = queryset.having(self.having)
         if self.order_by:
             queryset = queryset.order_by(*self.order_by)
         return queryset

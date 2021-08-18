@@ -14,6 +14,7 @@ from service_sqlalchemy.exception import ValidationError
 from .schemas import FieldTypeEnum
 from .operators import OperatorMeta
 from .functions import FunctionMeta
+from .functions import DefaultFunction
 
 BaseModel = declarative_base()
 
@@ -37,17 +38,13 @@ class FunctionExpression(object):
         @param type: 字段类型
         @param param: 函数选项
         """
-        try:
-            Function = FunctionMeta.mapping[fn]
-        except KeyError:
-            errs = f'invalid function {fn}'
-            raise ValidationError(errormsg=errs)
+        Function = FunctionMeta.mapping.get(
+            fn, DefaultFunction
+        )
         param = param or {}
         type = type or FieldTypeEnum.field.value
-        kwargs = {
-            'func': fn, 'model': model,
-            'field': field, 'type': type,
-            'param': param}
+        kwargs = {'func': fn, 'model': model, 'field': field,
+                  'type': type, 'param': param}
         self._function = Function(**kwargs)
 
     def eval(self) -> GenericFunction:
