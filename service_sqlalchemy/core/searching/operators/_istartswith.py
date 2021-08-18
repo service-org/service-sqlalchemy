@@ -11,7 +11,7 @@ from ._ilike import ILikeOperator
 
 
 class IStartsWithOperator(ILikeOperator):
-    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.ilike """
+    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.ilike """
 
     alias = {'istartswith'}
 

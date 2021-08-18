@@ -7,20 +7,20 @@ from __future__ import annotations
 from sqlalchemy.sql.elements import BinaryExpression
 from service_sqlalchemy.exception import ValidationError
 
-from .base import BaseOperator
+from ._ilike import ILikeOperator
 
 
-class NotInOperator(BaseOperator):
-    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.not_in """
+class LabelOperator(ILikeOperator):
+    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.label """
 
-    alias = {'notin', 'not_in'}
+    alias = {'label'}
 
     def expr(self) -> BinaryExpression:
         """ 构造表达式
 
         @return: BinaryExpression
         """
-        if not hasattr(self._value, '__iter__'):
-            errs = f'{self._field} must be iterable'
+        if not isinstance(self._value, str):
+            errs = f'{self._field} must be string'
             raise ValidationError(errormsg=errs)
-        return self.field.not_in(self._value)
+        return self.field.label(self._value)

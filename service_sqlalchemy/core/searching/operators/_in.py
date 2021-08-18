@@ -20,7 +20,7 @@ class InOperator(BaseOperator):
 
         @return: BinaryExpression
         """
-        if hasattr(self._value, '__iter__'):
-            return self.field.in_(self._value)
-        errs = f'{self._field} must be iterable'
-        raise ValidationError(errormsg=errs)
+        if not hasattr(self._value, '__iter__'):
+            errs = f'{self._field} must be iterable'
+            raise ValidationError(errormsg=errs)
+        return self.field.in_(self._value)

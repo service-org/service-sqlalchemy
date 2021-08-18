@@ -10,7 +10,7 @@ from .base import BaseOperator
 
 
 class GreaterThanEqualsOperator(BaseOperator):
-    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__ge__ """
+    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__ge__ """
 
     alias = {'>=', 'ge', 'gte', 'greater_than_equal', 'greater_than_equals'}
 

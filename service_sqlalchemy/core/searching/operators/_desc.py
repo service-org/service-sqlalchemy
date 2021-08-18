@@ -9,15 +9,14 @@ from sqlalchemy.sql.elements import BinaryExpression
 from .base import BaseOperator
 
 
-class LessThanEqualsOperator(BaseOperator):
-    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__le__ """
+class DescOperator(BaseOperator):
+    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc """
 
-    alias = {'<=', 'le', 'lte', 'less_than_equal', 'less_than_equals'}
+    alias = {'desc'}
 
     def expr(self) -> BinaryExpression:
         """ 构造表达式
 
         @return: BinaryExpression
         """
-        return self.field <= self._value  # type: ignore
-
+        return self.field.desc()

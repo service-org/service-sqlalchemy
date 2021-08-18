@@ -21,10 +21,10 @@ from .schemas import SearchSchema
 from .schemas import FilterSchema
 from .evaluate import make_filter
 from .evaluate import eval_filter
-from .evaluate import eval_having
 from .evaluate import eval_order_by
 from .evaluate import eval_group_by
-from .converts import convert_filter
+from .converts import convert_list_filter_to_dict
+from .converts import convert_dict_filter_to_list
 
 BaseModel = declarative_base()
 
@@ -62,6 +62,11 @@ class Search(object):
         join = join or []
         if not isinstance(join, list):
             join = [join]
+        having = having or []
+        if not isinstance(having, list):
+            having = [having]
+        self._having = having
+        order_by = order_by or []
         filter_by = filter_by or []
         if not isinstance(filter_by, list):
             filter_by = [filter_by]
@@ -69,17 +74,13 @@ class Search(object):
         group_by = group_by or []
         if not isinstance(group_by, list):
             group_by = [group_by]
-        having = having or []
-        if not isinstance(having, list):
-            having = [having]
-        order_by = order_by or []
         if not isinstance(order_by, list):
             order_by = [order_by]
-        schema = SearchSchema(query=query, join=join,
-                              order_by=order_by,
-                              group_by=group_by,
-                              having=having, page=page,
-                              page_size=page_size)
+        schema = SearchSchema(
+            query=query, join=join, order_by=order_by,
+            group_by=group_by, page=page,
+            page_size=page_size
+        )
         self._init_data = schema.dict()
 
     @AsLazyProperty
@@ -89,7 +90,7 @@ class Search(object):
         @return: t.List[t.Union[BaseModel, InstrumentedAttribute, GenericFunction]]
         """
         query = self._init_data['query']
-        return eval_query(module=self._module, queries=query)
+        return eval_query(module=self._module, fields=query)
 
     @AsLazyProperty
     def join(self) -> t.List[t.Tuple[InstrumentedAttribute, BooleanClauseList, t.Dict[t.Text, t.Any]]]:
@@ -109,9 +110,11 @@ class Search(object):
         # 整理成嵌套列表
         # 1.用于简化配置
         # 2.用于生成查询
-        filters = make_filter(*self._filter_by)
+        list_filters = make_filter(*self._filter_by)
+        dict_filters = convert_list_filter_to_dict(list_filters)
         # 验证嵌套的数据
-        FilterSchema(**convert_filter(filters))
+        dict_filters = FilterSchema(**dict_filters).dict()
+        filters = convert_dict_filter_to_list(dict_filters)
         return eval_filter(module=self._module, filters=filters)
 
     @AsLazyProperty
@@ -121,7 +124,7 @@ class Search(object):
         @return: t.List[t.Union[BaseModel, InstrumentedAttribute, GenericFunction]]
         """
         group_by = self._init_data['group_by']
-        return eval_group_by(module=self._module, queries=group_by)
+        return eval_group_by(module=self._module, fields=group_by)
 
     @AsLazyProperty
     def having(self) -> t.List[t.Union[BaseModel, InstrumentedAttribute, GenericFunction]]:
@@ -129,8 +132,15 @@ class Search(object):
 
         @return: t.List[t.Union[BaseModel, InstrumentedAttribute, GenericFunction]]
         """
-        having = self._init_data['having']
-        return eval_having(module=self._module, havings=having)
+        # 整理成嵌套列表
+        # 1.用于简化配置
+        # 2.用于生成查询
+        list_filters = make_filter(*self._having)
+        dict_filters = convert_list_filter_to_dict(list_filters)
+        # 验证嵌套的数据
+        dict_filters = FilterSchema(**dict_filters).dict()
+        havings = convert_dict_filter_to_list(dict_filters)
+        return eval_filter(module=self._module, filters=havings)
 
     @AsLazyProperty
     def order_by(self) -> t.List[t.Union[BaseModel, InstrumentedAttribute, GenericFunction]]:
@@ -139,7 +149,7 @@ class Search(object):
         @return: t.List[t.Union[BaseModel, InstrumentedAttribute, GenericFunction]]
         """
         order_by = self._init_data['order_by']
-        return eval_order_by(module=self._module, queries=order_by)
+        return eval_order_by(module=self._module, fields=order_by)
 
     @AsLazyProperty
     def queryset(self) -> Query:
@@ -151,9 +161,13 @@ class Search(object):
         for model, must, param in self.join:
             queryset = queryset.join(model, must, **param)
         queryset = queryset.filter(self.filter_by)
-        queryset = queryset.group_by(*self.group_by) if self.group_by else queryset
-        queryset = queryset.having(*self.having) if self.having else queryset
-        return queryset.order_by(*self.order_by) if self.order_by else queryset
+        if self.group_by:
+            queryset = queryset.group_by(*self.group_by)
+        if self._having:
+            queryset = queryset.having(*self.having)
+        if self.order_by:
+            queryset = queryset.order_by(*self.order_by)
+        return queryset
 
     @AsLazyProperty
     def pagination(self) -> Query:

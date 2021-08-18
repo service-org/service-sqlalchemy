@@ -467,7 +467,7 @@ class Service(BaseService):
 
 ### 比较运算
 
-* [lt](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__lt__)
+* [operators.lt](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__lt__)
 
 ```python
 """
@@ -487,7 +487,7 @@ result = orm_json_search(
 )
 ```
 
-* [le](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__le__)
+* [operators.le](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__le__)
 
 ```python
 """
@@ -507,7 +507,7 @@ result = orm_json_search(
 )
 ```
 
-* [eq](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__eq__)
+* [operators.eq](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__eq__)
 
 ```python
 """
@@ -527,7 +527,7 @@ result = orm_json_search(
 )
 ```
 
-* [gt](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__gt__)
+* [operators.gt](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__gt__)
 
 ```python
 """
@@ -547,7 +547,7 @@ result = orm_json_search(
 )
 ```
 
-* [ge](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__ge__)
+* [operators.ge](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__ge__)
 
 ```python
 """
@@ -567,7 +567,7 @@ result = orm_json_search(
 )
 ```
 
-* [ne](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__ne__)
+* [operators.ne](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__ne__)
 
 ```python
 """
@@ -589,7 +589,7 @@ result = orm_json_search(
 
 ### 逻辑运算
 
-* and
+* [Logicals.and](#)
 
 ```python
 """
@@ -625,7 +625,7 @@ result = orm_json_search(
 )
 ```
 
-* or
+* [Logicals.or](#)
 
 ```python
 """
@@ -655,7 +655,7 @@ result = orm_json_search(
 
 ### 模糊查询
 
-* [like](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.like)
+* [operators.like](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.like)
 
 ```python
 """
@@ -675,7 +675,7 @@ result = orm_json_search(
 )
 ```
 
-* [ilike](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.ilike)
+* [operators.ilike](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.ilike)
 
 ```python
 """
@@ -695,7 +695,51 @@ result = orm_json_search(
 )
 ```
 
-* [contains](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.contains)
+* [operators.not_like](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.not_like)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name NOT LIKE %(name_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by=[
+        {
+            'field': 'Perm.name',
+            'op': 'notlike',
+            'value': 'can%'
+        }
+    ]
+)
+```
+
+* [operators.notilike](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.not_ilike)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE lower(perm.name) NOT LIKE lower(%(name_1)s)
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by=[
+        {
+            'field': 'Perm.name',
+            'op': 'notilike',
+            'value': 'can%'
+        }
+    ]
+)
+```
+
+* [operators.contains](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.contains)
 
 ```python
 """
@@ -715,7 +759,7 @@ result = orm_json_search(
 )
 ```
 
-* [icontains](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.contains)
+* [operators.icontains](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.contains)
 
 ```python
 """
@@ -735,7 +779,7 @@ result = orm_json_search(
 )
 ```
 
-* [startswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.startswith)
+* [operators.startswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.startswith)
 
 ```python
 """
@@ -755,7 +799,7 @@ result = orm_json_search(
 )
 ```
 
-* [istartswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.ilike)
+* [operators.istartswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.ilike)
 
 ```python
 """
@@ -775,7 +819,7 @@ result = orm_json_search(
 )
 ```
 
-* [endswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.endswith)
+* [operators.endswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.endswith)
 
 ```python
 """
@@ -795,7 +839,7 @@ result = orm_json_search(
 )
 ```
 
-* [iendswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.endswith)
+* [operators.iendswith](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.endswith)
 
 ```python
 """
@@ -815,9 +859,92 @@ result = orm_json_search(
 )
 ```
 
+### 字段去重
+
+* [operators.distinct](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.distinct)
+
+```python
+"""
+SELECT DISTINCT perm.name
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': 'Perm.name',
+            'op': 'distinct'
+        }
+    ]
+)
+```
+
+* [functions.distinct](#sqlalchemy.sql.expression.distinct)
+```python
+
+```
+
+### 正则匹配
+
+* [operators.regexp_match](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.regexp_match)
+
+````python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name REGEXP %(name_1)s
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by=[
+        {
+            'field': 'Perm.name',
+            'op': 'regexp_match',
+            'value': 'can.*'
+        }
+    ]
+)
+````
+
+### 正则替换
+
+* [operators.regexp_replace](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.regexp_replace)
+
+```python
+"""
+SELECT REGEXP_REPLACE(perm.name, %(name_1)s, %(name_2)s) AS anon_1
+FROM perm
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        {
+            'field': 'Perm.name',
+            'op': 'regexp_replace',
+            'value': [
+                {
+                    'type': 'plain',
+                    'field': 'can',
+                    'op': 'plain'
+                },
+                {
+                    'type': 'plain',
+                    'field': 'CAN',
+                    'op': 'plain'
+                }
+            ],
+        }
+    ]
+)
+```
+
 ### 范围查询
 
-* [in](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.in_)
+* [operators.in](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.in_)
 
 ```python
 """
@@ -837,7 +964,7 @@ result = orm_json_search(
 )
 ```
 
-* [not_in](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.notin_)
+* [operators.not_in](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.notin_)
 
 ```python
 """
@@ -857,7 +984,7 @@ result = orm_json_search(
 )
 ```
 
-* [between](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.between)
+* [operators.between](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.between)
 
 ```python
 """
@@ -879,7 +1006,7 @@ result = orm_json_search(
 
 ### 空值判断
 
-* [is](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_)
+* [operators.is](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_)
 
 ```python
 """
@@ -899,7 +1026,7 @@ result = orm_json_search(
 )
 ```
 
-* [is_not](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_not)
+* [operators.is_not](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_not)
 
 ```python
 """
@@ -919,7 +1046,7 @@ result = orm_json_search(
 )
 ```
 
-* [is_null](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_)
+* [operators.is_null](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_)
 
 ```python
 """
@@ -939,7 +1066,7 @@ result = orm_json_search(
 )
 ```
 
-* [is_not_null](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_not)
+* [operators.is_not_null](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.is_not)
 
 ```python
 """
@@ -961,7 +1088,7 @@ result = orm_json_search(
 
 ### 存在判断
 
-* [any](https://docs.sqlalchemy.org/en/14/orm/internals.html#sqlalchemy.orm.RelationshipProperty.Comparator.any)
+* [comparator.any](https://docs.sqlalchemy.org/en/14/orm/internals.html#sqlalchemy.orm.RelationshipProperty.Comparator.any)
 
 ```python
 """
@@ -987,7 +1114,7 @@ result = orm_json_search(
 )
 ```
 
-* [has](https://docs.sqlalchemy.org/en/14/orm/internals.html#sqlalchemy.orm.RelationshipProperty.Comparator.has)
+* [comparator.has](https://docs.sqlalchemy.org/en/14/orm/internals.html#sqlalchemy.orm.RelationshipProperty.Comparator.has)
 
 ```python
 """
@@ -1015,7 +1142,30 @@ result = orm_json_search(
 
 ### 基本排序
 
-* order_by
+* [order_by asc](#)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s ORDER BY perm.name ASC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',
+        'value': 'admin'
+    },
+    order_by=[
+        '+Perm.name'
+    ]
+)
+```
+
+* [order_by desc](#)
 
 ```python
 """
@@ -1038,9 +1188,113 @@ result = orm_json_search(
 )
 ```
 
+* [order_by operators.asc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.asc)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s ORDER BY perm.name ASC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',
+        'value': 'admin'
+    },
+    order_by=[
+        {
+            'field': 'Perm.name',
+            'op': 'asc'
+        }
+    ]
+)
+```
+
+* [order_by operators.desc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s ORDER BY perm.name DESC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',
+        'value': 'admin'
+    },
+    order_by=[
+        {
+            'field': 'Perm.name',
+            'op': 'desc'
+        }
+    ]
+)
+```
+
+* [order_by functions.asc](#sqlalchemy.sql.expression.asc)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s ORDER BY perm.name ASC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',
+        'value': 'admin'
+    },
+    order_by=[
+        {
+            'field': 'Perm.name',
+            'fn': 'asc'
+        }
+    ]
+)
+```
+
+* [order_by functions.desc](#sqlalchemy.sql.expression.desc)
+
+```python
+"""
+SELECT perm.id AS perm_id, perm.name AS perm_name
+FROM perm
+WHERE perm.name != %(name_1)s ORDER BY perm.name DESC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=['Perm'],
+    filter_by={
+        'field': 'Perm.name',
+        'op': 'ne',
+        'value': 'admin'
+    },
+    order_by=[
+        {
+            'field': 'Perm.name',
+            'fn': 'desc'
+        }
+    ]
+)
+```
+
 ### 分组查询
 
-* group_by
+* [group_by](#)
 
 ```python
 """
@@ -1066,7 +1320,7 @@ result = orm_json_search(
 )
 ```
 
-* having
+* [group by having](#)
 
 ```python
 """
@@ -1105,13 +1359,93 @@ result = orm_json_search(
 
 ### 分组排序
 
-* order_by
+* [group by having order_by asc](#)
 
 ```python
 """
 SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
 FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
-HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) DESC
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name ASC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'field'
+        }
+    ],
+    having=[
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'op': 'ge',
+            'value': 1
+        }
+    ],
+    order_by=[
+        '+Role.name'
+    ]
+)
+```
+
+* [group by having order_by desc](#)
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name DESC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'field'
+        }
+    ],
+    having=[
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'op': 'ge',
+            'value': 1
+        }
+    ],
+    order_by=[
+        '-Role.name'
+    ]
+)
+```
+
+* [group by having order_by operators.asc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.asc)
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name ASC
 """
 result = orm_json_search(
     self.db_session,  # type: ignore
@@ -1141,10 +1475,136 @@ result = orm_json_search(
     ],
     order_by=[
         {
+            'field': 'Role.name',
+            'op': 'asc'
+        }
+    ]
+)
+```
+
+* [group by having order_by operators.desc](https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.desc)
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name DESC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'field'
+        }
+    ],
+    having=[
+        {
             'field': {
                 'field': 'Role.users',
                 'fn': 'count'
             },
+            'op': 'ge',
+            'value': 1
+        }
+    ],
+    order_by=[
+        {
+            'field': 'Role.name',
+            'op': 'desc'
+        }
+    ]
+)
+```
+
+* [group by having order_by functions.asc](#sqlalchemy.sql.expression.asc)
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name ASC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'field'
+        }
+    ],
+    having=[
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'op': 'ge',
+            'value': 1
+        }
+    ],
+    order_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'asc'
+        }
+    ]
+)
+```
+
+* [group by having order_by functions.desc](#sqlalchemy.sql.expression.desc)
+
+```python
+"""
+SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) AS count_1
+FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
+HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name DESC
+"""
+result = orm_json_search(
+    self.db_session,  # type: ignore
+    module=models,
+    query=[
+        'Role.name',
+        {
+            'field': 'Role.users',
+            'fn': 'count'
+        }
+    ],
+    group_by=[
+        {
+            'field': 'Role.name',
+            'fn': 'field'
+        }
+    ],
+    having=[
+        {
+            'field': {
+                'field': 'Role.users',
+                'fn': 'count'
+            },
+            'op': 'ge',
+            'value': 1
+        }
+    ],
+    order_by=[
+        {
+            'field': 'Role.name',
             'fn': 'desc'
         }
     ]
@@ -1153,7 +1613,7 @@ result = orm_json_search(
 
 ### 聚合函数
 
-* [count](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.count)
+* [functions.count](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.count)
 
 ```python
 """
@@ -1176,7 +1636,7 @@ result = orm_json_search(
 )
 ```
 
-* [min](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.min)
+* [functions.min](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.min)
 
 ```python
 """
@@ -1195,7 +1655,7 @@ result = orm_json_search(
 )
 ```
 
-* [max](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.max)
+* [functions.max](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.max)
 
 ```python
 """
@@ -1214,7 +1674,7 @@ result = orm_json_search(
 )
 ```
 
-* [avg](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.avg)
+* [functions.avg](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.avg)
 
 ```python
 """
@@ -1233,7 +1693,7 @@ result = orm_json_search(
 )
 ```
 
-* [sum](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.sum)
+* [functions.sum](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.sum)
 
 ```python
 """
@@ -1254,7 +1714,7 @@ result = orm_json_search(
 
 ### 分组聚合
 
-* [count](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.count)
+* [group by functions.count](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.count)
 
 ```python
 """
@@ -1277,7 +1737,7 @@ result = orm_json_search(
 )
 ```
 
-* [min](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.min)
+* [group by functions.min](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.min)
 
 ```python
 """
@@ -1300,7 +1760,7 @@ result = orm_json_search(
 )
 ```
 
-* [max](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.max)
+* [group by functions.max](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.max)
 
 ```python
 """
@@ -1323,7 +1783,7 @@ result = orm_json_search(
 )
 ```
 
-* [avg](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.avg)
+* [group by functions.avg](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.avg)
 
 ```python
 """
@@ -1346,7 +1806,7 @@ result = orm_json_search(
 )
 ```
 
-* [sum](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.sum)
+* [group by functions.sum](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.sum)
 
 ```python
 """
@@ -1371,7 +1831,7 @@ result = orm_json_search(
 
 ### 连接查询
 
-* join
+* [join on](#)
 
 ```python
 """
@@ -1409,6 +1869,8 @@ result = orm_json_search(
 
 ### 分页查询
 
+* [limit](#)
+
 ```python
 """
 SELECT perm.id AS perm_id, perm.name AS perm_name
@@ -1425,7 +1887,7 @@ result = orm_json_search(
 
 ### 其它函数
 
-* [char_length](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.char_length)
+* [functions.char_length](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.char_length)
 
 ```python
 """
@@ -1445,7 +1907,7 @@ result = orm_json_search(
 )
 ```
 
-* [concat](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.concat)
+* [functions.concat](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.concat)
 
 ```python
 """
@@ -1478,7 +1940,7 @@ result = orm_json_search(
 )
 ```
 
-* [coalesce](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.coalesce)
+* [functions.coalesce](https://docs.sqlalchemy.org/en/14/core/functions.html#sqlalchemy.sql.functions.coalesce)
 
 ```python
 """
@@ -1508,7 +1970,7 @@ result = orm_json_search(
 )
 ```
 
-* substring
+* [functions.substring]()
 
 ```python
 """
@@ -1543,7 +2005,7 @@ result = orm_json_search(
 )
 ```
 
-* substring_index
+* [functions.substring_index]()
 
 ```python
 """
@@ -1577,3 +2039,5 @@ result = orm_json_search(
     ]
 )
 ```
+
+* [functions.substring_index]()

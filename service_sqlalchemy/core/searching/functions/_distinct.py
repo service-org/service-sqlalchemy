@@ -2,20 +2,20 @@
 #
 # author: forcemain@163.com
 
-
+from sqlalchemy import distinct
 from sqlalchemy.sql.functions import GenericFunction
 
 from .base import BaseFunction
 
 
-class PlainFunction(BaseFunction):
-    """ 返回原始数据内容 """
+class DistinctFunction(BaseFunction):
+    """ sqlalchemy.sql.expression.distinct """
 
-    alias = {'me', 'self', 'plain'}
+    alias = {'distinct'}
 
     def eval(self) -> GenericFunction:
         """ 生成的函数
 
         @return: GenericFunction
         """
-        return self.field
+        return distinct(self.field)

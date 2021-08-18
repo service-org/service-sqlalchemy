@@ -10,7 +10,7 @@ from .base import BaseOperator
 
 
 class NotEqualsOperator(BaseOperator):
-    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__ne__ """
+    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__ne__ """
 
     alias = {'ne', '!=', 'notequal', 'not_equal', 'notequals', 'not_equals'}
 

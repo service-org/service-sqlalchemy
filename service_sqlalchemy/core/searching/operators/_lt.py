@@ -10,7 +10,7 @@ from .base import BaseOperator
 
 
 class LessThanOperator(BaseOperator):
-    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnElement.__lt__ """
+    """ https://docs.sqlalchemy.org/en/14/core/sqlelement.html#sqlalchemy.sql.expression.ColumnOperators.__lt__ """
 
     alias = {'<', 'lt', 'less_than'}
 

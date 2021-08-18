@@ -2,20 +2,20 @@
 #
 # author: forcemain@163.com
 
-
 from sqlalchemy.sql.functions import GenericFunction
 
 from .base import BaseFunction
 
 
-class PlainFunction(BaseFunction):
-    """ 返回原始数据内容 """
+class LowerFunction(BaseFunction):
+    """ sqlalchemy.sql.func.lower """
 
-    alias = {'me', 'self', 'plain'}
+    alias = {'lower'}
 
     def eval(self) -> GenericFunction:
         """ 生成的函数
 
         @return: GenericFunction
         """
-        return self.field
+
+        return self.func(self.field, **self._param)
