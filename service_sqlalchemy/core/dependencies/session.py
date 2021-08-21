@@ -61,9 +61,7 @@ class SQLAlchemy(Dependency):
         self.engine_options.setdefault('pool_recycle', 2 * 60 * 60)
         self.session_options = session_options or {}
         self.migrate_options = migrate_options or {}
-        skip_inject = kwargs.pop('skip_inject', False)
-        skip_loaded = kwargs.pop('skip_loaded', False)
-        super(SQLAlchemy, self).__init__(skip_inject=skip_inject, skip_loaded=skip_loaded)
+        super(SQLAlchemy, self).__init__(**kwargs)
 
     def setup(self) -> None:
         """ 生命周期 - 载入阶段
