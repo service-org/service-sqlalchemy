@@ -70,8 +70,10 @@ class SQLAlchemy(Dependency):
         """
         sqlalchemy_url = self.container.config.get(f'{SQLALCHEMY_CONFIG_KEY}.{self.alias}.url', default='')
         engine_options = self.container.config.get(f'{SQLALCHEMY_CONFIG_KEY}.{self.alias}.engine_options', default={})
+        # 防止YAML中声明值为None
         self.engine_options = (engine_options or {}) | self.engine_options
         session_options = self.container.config.get(f'{SQLALCHEMY_CONFIG_KEY}.{self.alias}.session_options', default={})
+        # 防止YAML中声明值为None
         self.session_options = (session_options or {}) | self.session_options
         self.engine = create_engine(sqlalchemy_url, **self.engine_options)
         self.session_cls = scoped_session(sessionmaker(bind=self.engine, **self.session_options))
