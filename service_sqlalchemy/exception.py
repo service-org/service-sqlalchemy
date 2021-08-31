@@ -8,5 +8,5 @@ from service_core.exception import RemoteError
 
 
 class ValidationError(RemoteError):
-    """ SQLAlchemy异常 """
+    """ 校验异常 """
     pass
