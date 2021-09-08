@@ -386,7 +386,7 @@ target_metadata = BaseModel.metadata
 ```python
 import sqlalchemy as sa
 # 为alembic迁移脚本注入sqlalchemy_utils支持
-import sqlalchemy_utils as su
+import sqlalchemy_utils
 ```
 
 :point_right: core alembic --name test upgrade head
