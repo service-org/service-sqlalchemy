@@ -315,7 +315,7 @@ class Service(BaseService):
     # 微服务简介
     desc = 'demo'
     
-    # 作为依赖项
+    # 数据库ORM
     db_session: scoped_session = SQLAlchemy(alias='test', debug=True)
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
