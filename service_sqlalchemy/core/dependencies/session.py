@@ -89,6 +89,7 @@ class SQLAlchemy(Dependency):
         @param context: 上下文对象
         @return: t.Any
         """
+        # 主要用于优雅关闭每条连接
         call_id = context.worker_request_id
         self.session_map[call_id] = self.session_cls()
         return self.session_map[call_id]
@@ -99,6 +100,7 @@ class SQLAlchemy(Dependency):
         @param context: 上下文对象
         @return: None
         """
+        # 主要用于优雅关闭每条连接
         call_id = context.worker_request_id
         session = self.session_map.pop(call_id, None)
         session and session.close()
