@@ -15,7 +15,7 @@ from service_core.core.service.dependency import Dependency
 from service_sqlalchemy.constants import SQLALCHEMY_CONFIG_KEY
 
 logger = getLogger(__name__)
-p_size = cpu_count() * 2
+p_size = cpu_count() * 4
 
 
 class SQLAlchemy(Dependency):
@@ -24,7 +24,6 @@ class SQLAlchemy(Dependency):
     def __init__(
             self,
             alias: t.Text,
-            debug: t.Optional[bool] = None,
             engine_options: t.Optional[t.Dict[t.Text, t.Any]] = None,
             session_wrapper: t.Optional[t.Callable[..., t.Any]] = None,
             session_options: t.Optional[t.Dict[t.Text, t.Any]] = None,
@@ -34,7 +33,6 @@ class SQLAlchemy(Dependency):
         """ 初始化实例
 
         @param alias: 配置别名
-        @param debug: 开启调试
         @param engine_options:  引擎配置
         @param session_wrapper: 会话装饰
         @param session_options: 会话配置
@@ -44,15 +42,14 @@ class SQLAlchemy(Dependency):
         self.alias = alias
         self.engine = None
         self.session_map = {}
-        self.debug = bool(debug)
         self.session_cls = None
         self.session_wrapper = session_wrapper
         self.engine_options = engine_options or {}
         # 默认设置连接池的大小为CPU数量的2倍同时允许超出1倍
         self.engine_options.setdefault('pool_size', p_size)
         self.engine_options.setdefault('max_overflow', p_size)
-        # 根据配置中的debug设置是否开启orm详细日志打印功能
-        self.engine_options.setdefault('echo', self.debug)
+        # 根据配置中的echo设置是否开启orm详细日志打印的功能
+        self.engine_options.setdefault('echo', False)
         # 允许在数据库宕机恢复后新的请求自动尝试重新建立连接
         self.engine_options.setdefault('pool_pre_ping', True)
         # 当连接池中没有连接可用时等待时间,如连接未及时关闭
