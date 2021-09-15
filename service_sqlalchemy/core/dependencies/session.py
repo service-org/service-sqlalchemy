@@ -9,8 +9,9 @@ import typing as t
 from logging import getLogger
 from sqlalchemy import create_engine
 from multiprocessing import cpu_count
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 from service_core.core.context import WorkerContext
-from sqlalchemy.orm import sessionmaker, scoped_session
 from service_core.core.service.dependency import Dependency
 from service_sqlalchemy.constants import SQLALCHEMY_CONFIG_KEY
 

@@ -296,8 +296,8 @@ from __future__ import annotations
 import typing as t
 
 from logging import getLogger
-from sqlalchemy.orm.scoping import scoped_session
 from service_croniter.core.entrypoints import croniter
+from service_sqlalchemy.core.client import SQLAlchemyClient
 from service_sqlalchemy.core.dependencies import SQLAlchemy
 from service_core.core.service import Service as BaseService
 from service_sqlalchemy.core.shortcuts import update_or_create
@@ -316,7 +316,7 @@ class Service(BaseService):
     desc = 'demo'
     
     # 数据库ORM
-    db_session: scoped_session = SQLAlchemy(alias='test')
+    db_session: SQLAlchemyClient = SQLAlchemy(alias='test')
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         # 此服务无需启动监听端口, 请初始化掉下面参数
