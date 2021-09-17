@@ -8,7 +8,6 @@ import typing as t
 
 from logging import getLogger
 from sqlalchemy import create_engine
-from multiprocessing import cpu_count
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from service_core.core.context import WorkerContext
@@ -16,7 +15,6 @@ from service_core.core.service.dependency import Dependency
 from service_sqlalchemy.constants import SQLALCHEMY_CONFIG_KEY
 
 logger = getLogger(__name__)
-p_size = cpu_count() * 4
 
 
 class SQLAlchemy(Dependency):
@@ -46,9 +44,9 @@ class SQLAlchemy(Dependency):
         self.session_cls = None
         self.session_wrapper = session_wrapper
         self.engine_options = engine_options or {}
-        # 默认设置连接池的大小为CPU数量的2倍同时允许超出1倍
-        self.engine_options.setdefault('pool_size', p_size)
-        self.engine_options.setdefault('max_overflow', p_size)
+        # 默认设置连接池的大小为1024允许最大超出连接为1024
+        self.engine_options.setdefault('pool_size', 1024)
+        self.engine_options.setdefault('max_overflow', 1024)
         # 根据配置中的echo设置是否开启orm详细日志打印的功能
         self.engine_options.setdefault('echo', False)
         # 允许在数据库宕机恢复后新的请求自动尝试重新建立连接
