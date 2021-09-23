@@ -57,7 +57,6 @@ class SQLAlchemy(Dependency):
         self.engine_options.setdefault('pool_recycle', 2 * 60 * 60)
         self.session_options = session_options or {}
         self.migrate_options = migrate_options or {}
-        kwargs.setdefault('once_inject', False)
         super(SQLAlchemy, self).__init__(**kwargs)
 
     def setup(self) -> None:
