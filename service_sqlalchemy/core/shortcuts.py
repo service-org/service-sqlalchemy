@@ -9,16 +9,16 @@ import typing as t
 from types import ModuleType
 from sqlalchemy.orm.query import Query
 from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 from .searching import Search
+from .client import SQLAlchemyClient
 
 BaseModel = declarative_base()
 
 
 def select_or_create(
-        session: scoped_session,
+        session: SQLAlchemyClient,
         *,
         model: BaseModel,
         defaults: t.Optional[t.Dict[t.Text, t.Any]] = None,
@@ -45,7 +45,7 @@ def select_or_create(
 
 
 def update_or_create(
-        session: scoped_session,
+        session: SQLAlchemyClient,
         *,
         model: BaseModel,
         defaults: t.Optional[t.Dict[t.Text, t.Any]] = None,
@@ -75,7 +75,7 @@ def update_or_create(
 
 
 def orm_json_search(
-        session: scoped_session,
+        session: SQLAlchemyClient,
         *,
         module: ModuleType,
         query: t.List[t.Union[t.Text, t.Dict]],

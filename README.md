@@ -297,7 +297,6 @@ import typing as t
 
 from logging import getLogger
 from service_croniter.core.entrypoints import croniter
-from service_sqlalchemy.core.client import SQLAlchemyClient
 from service_sqlalchemy.core.dependencies import SQLAlchemy
 from service_core.core.service import Service as BaseService
 from service_sqlalchemy.core.shortcuts import update_or_create
@@ -316,7 +315,7 @@ class Service(BaseService):
     desc = 'demo'
     
     # 数据库ORM
-    db_session: SQLAlchemyClient = SQLAlchemy(alias='test')
+    orm: SQLAlchemy = SQLAlchemy(alias='test')
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         # 此服务无需启动监听端口, 请初始化掉下面参数
@@ -334,11 +333,15 @@ class Service(BaseService):
         """
         # defaults不为空才会触发更新事件
         defaults = {'name': 'admin'}
-        update_or_create(self.db_session,  # type: ignore
-                         model=models.Perm,
-                         defaults=defaults,
-                         name='admin')
+        db_session = self.orm.get_client()
+        update_or_create(
+            db_session, 
+            model=models.Perm, 
+            defaults=defaults, 
+            name='admin'
+        )
         logger.debug(f'yeah~ yeah~ yeah~, i am changed')
+        db_session.close()
 ```
 
 > facade.py
@@ -417,7 +420,6 @@ from __future__ import annotations
 import typing as t
 
 from logging import getLogger
-from sqlalchemy.orm.scoping import scoped_session
 from service_croniter.core.entrypoints import croniter
 from service_sqlalchemy.core.dependencies import SQLAlchemy
 from service_core.core.service import Service as BaseService
@@ -436,7 +438,7 @@ class Service(BaseService):
     # 微服务简介
     desc = 'demo'
 
-    db_session: scoped_session = SQLAlchemy(alias='test')
+    orm: SQLAlchemy = SQLAlchemy(alias='test')
 
     def __init__(self, *args: t.Any, **kwargs: t.Any) -> None:
         # 此服务无需启动监听端口, 请初始化掉下面参数
@@ -455,8 +457,9 @@ class Service(BaseService):
         FROM perm
         WHERE perm.name = %(name_1)s
         """
+        db_session = self.orm.get_client()
         result = orm_json_search(
-            self.db_session,  # type: ignore
+            db_session,  # type: ignore
             module=models,
             query=['Perm'],
             filter_by={
@@ -466,6 +469,7 @@ class Service(BaseService):
             }
         )
         logger.debug(f'sql: {result} res: {result.all()}')
+        db_session.close()
 ```
 
 ### 比较运算
@@ -479,7 +483,7 @@ FROM perm
 WHERE perm.id < %(id_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -499,7 +503,7 @@ FROM perm
 WHERE perm.id <= %(id_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -519,7 +523,7 @@ FROM perm
 WHERE perm.name = %(name_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -539,7 +543,7 @@ FROM perm
 WHERE perm.id > %(id_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -559,7 +563,7 @@ FROM perm
 WHERE perm.id >= %(id_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -579,7 +583,7 @@ FROM perm
 WHERE perm.name != %(name_1)s 
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -601,7 +605,7 @@ FROM perm
 WHERE perm.id = %(id_1)s AND perm.name IS NOT NULL AND perm.name != %(name_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by=[
@@ -637,7 +641,7 @@ FROM perm
 WHERE perm.name IS NULL OR perm.name = %(name_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by=[
@@ -667,7 +671,7 @@ FROM perm
 WHERE perm.name LIKE %(name_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -687,7 +691,7 @@ FROM perm
 WHERE lower(perm.name) LIKE lower(%(name_1)s)
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -707,7 +711,7 @@ FROM perm
 WHERE perm.name NOT LIKE %(name_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by=[
@@ -729,7 +733,7 @@ FROM perm
 WHERE lower(perm.name) NOT LIKE lower(%(name_1)s)
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by=[
@@ -751,7 +755,7 @@ FROM perm
 WHERE (perm.name LIKE concat(concat('%%', %(name_1)s), '%%'))
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -771,7 +775,7 @@ FROM perm
 WHERE lower(perm.name) LIKE lower(%(name_1)s)
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -791,7 +795,7 @@ FROM perm
 WHERE (perm.name LIKE concat(%(name_1)s, '%%'))
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -811,7 +815,7 @@ FROM perm
 WHERE lower(perm.name) LIKE lower(%(name_1)s)
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -831,7 +835,7 @@ FROM perm
 WHERE (perm.name LIKE concat('%%', %(name_1)s))
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -851,7 +855,7 @@ FROM perm
 WHERE lower(perm.name) LIKE lower(%(name_1)s)
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -872,7 +876,7 @@ SELECT DISTINCT perm.name
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         {
@@ -900,7 +904,7 @@ FROM perm
 WHERE perm.name REGEXP %(name_1)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by=[
@@ -923,7 +927,7 @@ SELECT REGEXP_REPLACE(perm.name, %(name_1)s, %(name_2)s) AS anon_1
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         {
@@ -957,7 +961,7 @@ FROM perm
 WHERE perm.id IN ([POSTCOMPILE_id_1])
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -977,7 +981,7 @@ FROM perm
 WHERE (perm.id NOT IN ([POSTCOMPILE_id_1]))
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -997,7 +1001,7 @@ FROM perm
 WHERE perm.id BETWEEN %(id_1)s AND %(id_2)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1019,7 +1023,7 @@ FROM perm
 WHERE perm.name IS NULL
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1039,7 +1043,7 @@ FROM perm
 WHERE perm.name IS NOT NULL
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1059,7 +1063,7 @@ FROM perm
 WHERE perm.name IS NULL
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1079,7 +1083,7 @@ FROM perm
 WHERE perm.name IS NOT NULL
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1103,7 +1107,7 @@ FROM role_perm, perm
 WHERE `role`.id = role_perm.role_id AND perm.id = role_perm.perm_id AND perm.name = %(name_1)s)
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Role'],
     filter_by={
@@ -1129,7 +1133,7 @@ FROM user
 WHERE user.id = apps.user_id AND (user.name LIKE concat('%%', %(name_1)s))))
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Apps'],
     filter_by={
@@ -1155,7 +1159,7 @@ FROM perm
 WHERE perm.name != %(name_1)s ORDER BY perm.name ASC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1178,7 +1182,7 @@ FROM perm
 WHERE perm.name != %(name_1)s ORDER BY perm.name DESC res
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1201,7 +1205,7 @@ FROM perm
 WHERE perm.name != %(name_1)s ORDER BY perm.name ASC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1227,7 +1231,7 @@ FROM perm
 WHERE perm.name != %(name_1)s ORDER BY perm.name DESC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1253,7 +1257,7 @@ FROM perm
 WHERE perm.name != %(name_1)s ORDER BY perm.name ASC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1279,7 +1283,7 @@ FROM perm
 WHERE perm.name != %(name_1)s ORDER BY perm.name DESC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     filter_by={
@@ -1306,7 +1310,7 @@ SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.
 FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1333,7 +1337,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) = %(count_2)s OR count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) = %(count_3)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1381,7 +1385,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name ASC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1421,7 +1425,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name DESC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1461,7 +1465,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name ASC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1504,7 +1508,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name DESC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1547,7 +1551,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name ASC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1590,7 +1594,7 @@ FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 HAVING count(`role`.id = user_role_1.role_id AND user.id = user_role_1.user_id) >= %(count_2)s ORDER BY `role`.name DESC
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1634,7 +1638,7 @@ SELECT `role`.name AS role_name, count(`role`.id = user_role_1.role_id AND user.
 FROM `role`, user_role AS user_role_1, user GROUP BY `role`.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Role.name',
@@ -1657,7 +1661,7 @@ SELECT min(perm.id) AS min_1
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         {
@@ -1676,7 +1680,7 @@ SELECT max(perm.id) AS max_1
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         {
@@ -1695,7 +1699,7 @@ SELECT avg(perm.id) AS avg_1
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         {
@@ -1714,7 +1718,7 @@ SELECT sum(perm.id) AS sum_1
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         {
@@ -1735,7 +1739,7 @@ SELECT perm.name AS perm_name, count(perm.id) AS count_1
 FROM perm GROUP BY perm.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',
@@ -1758,7 +1762,7 @@ SELECT perm.name AS perm_name, min(perm.id) AS min_1
 FROM perm GROUP BY perm.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',
@@ -1781,7 +1785,7 @@ SELECT perm.name AS perm_name, max(perm.id) AS max_1
 FROM perm GROUP BY perm.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',
@@ -1804,7 +1808,7 @@ SELECT perm.name AS perm_name, avg(perm.id) AS avg_1
 FROM perm GROUP BY perm.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',
@@ -1827,7 +1831,7 @@ SELECT perm.name AS perm_name, sum(perm.id) AS sum_1
 FROM perm GROUP BY perm.name
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',
@@ -1852,7 +1856,7 @@ SELECT user.name AS user_name, apps.name AS apps_name
 FROM user INNER JOIN apps ON user.id = apps.id
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'User.name',
@@ -1891,7 +1895,7 @@ FROM perm
  LIMIT %(param_1)s, %(param_2)s
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=['Perm'],
     page=2, page_size=2
@@ -1910,7 +1914,7 @@ SELECT perm.name AS perm_name, coalesce(perm.name, %(coalesce_2)s) AS coalesce_1
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',
@@ -1942,7 +1946,7 @@ SELECT perm.name AS perm_name, substring(perm.name, %(substring_2)s, %(substring
 FROM perm
 """
 result = orm_json_search(
-    self.db_session,  # type: ignore
+    db_session,  # type: ignore
     module=models,
     query=[
         'Perm.name',

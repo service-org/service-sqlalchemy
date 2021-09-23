@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
 from service_core.core.context import WorkerContext
+from service_sqlalchemy.core.client import SQLAlchemyClient
 from service_core.core.service.dependency import Dependency
 from service_sqlalchemy.constants import SQLALCHEMY_CONFIG_KEY
 
@@ -83,24 +84,9 @@ class SQLAlchemy(Dependency):
         """
         self.engine.dispose()
 
-    def get_instance(self, context: WorkerContext) -> t.Any:
-        """ 获取注入对象
+    def get_client(self) -> SQLAlchemyClient:
+        """ 获取一个独立的会话
 
-        @param context: 上下文对象
-        @return: t.Any
+        @return: SQLAlchemyClient
         """
-        # 主要用于优雅关闭每条连接
-        call_id = context.worker_request_id
-        self.session_map[call_id] = self.session_cls()
-        return self.session_map[call_id]
-
-    def worker_finish(self, context: WorkerContext) -> None:
-        """ 工作协程 - 完毕回调
-
-        @param context: 上下文对象
-        @return: None
-        """
-        # 主要用于优雅关闭每条连接
-        call_id = context.worker_request_id
-        session = self.session_map.pop(call_id, None)
-        session and session.close()
+        return self.session_cls()

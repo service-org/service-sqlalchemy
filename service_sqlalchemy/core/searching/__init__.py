@@ -8,11 +8,11 @@ import typing as t
 
 from types import ModuleType
 from sqlalchemy.orm import Query
-from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.sql.functions import GenericFunction
 from sqlalchemy.sql.elements import BooleanClauseList
 from service_core.core.decorator import AsLazyProperty
 from sqlalchemy.ext.declarative import declarative_base
+from service_sqlalchemy.core.client import SQLAlchemyClient
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from .evaluate import eval_join
@@ -34,7 +34,7 @@ class Search(object):
 
     def __init__(
             self,
-            session: scoped_session,
+            session: SQLAlchemyClient,
             *,
             module: ModuleType,
             query: t.List[t.Union[t.Text, t.Dict[t.Text, t.Any]]],
