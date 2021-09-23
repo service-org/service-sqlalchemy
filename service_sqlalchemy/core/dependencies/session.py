@@ -10,7 +10,6 @@ from logging import getLogger
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import scoped_session
-from service_core.core.context import WorkerContext
 from service_sqlalchemy.core.client import SQLAlchemyClient
 from service_core.core.service.dependency import Dependency
 from service_sqlalchemy.constants import SQLALCHEMY_CONFIG_KEY
