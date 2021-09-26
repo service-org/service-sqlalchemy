@@ -29,7 +29,8 @@ COMMAND:
   - service_sqlalchemy.cli.subcmds.migrate:Alembic
 SQLALCHEMY:
   test:
-    url: mysql+pymysql://${MYSQL_USER:root}:${MYSQL_PASS:toor}@${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/demo?charset=utf8mb4
+    engine_options:
+      url: mysql+pymysql://${MYSQL_USER:root}:${MYSQL_PASS:toor}@${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/demo?charset=utf8mb4
     migrate_options:
       script_location: alembic/test
 ```
