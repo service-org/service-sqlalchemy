@@ -55,7 +55,7 @@ class Alembic(BaseCommand):
                                  ini_section=alembic_options.name, cmd_opts=alembic_options)
         # https://alembic.sqlalchemy.org/en/latest/cookbook.html#run-multiple-alembic-environments-from-one-ini-file
         section_curr_name = alembic_options.name
-        migrate_used_urls = config.get(f'{SQLALCHEMY_CONFIG_KEY}.{section_curr_name}.url', default='')
+        migrate_used_urls = config.get(f'{SQLALCHEMY_CONFIG_KEY}.{section_curr_name}.engine_options.url', default='')
         database_exists(migrate_used_urls) or create_database(migrate_used_urls)
         alembic_configs.set_section_option(section_curr_name, 'sqlalchemy.url', migrate_used_urls)
         migrate_options = config.get(f'{SQLALCHEMY_CONFIG_KEY}.{section_curr_name}.migrate_options', default={})
