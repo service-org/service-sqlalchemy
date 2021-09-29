@@ -20,6 +20,8 @@ logger = getLogger(__name__)
 class SQLAlchemy(Dependency):
     """ SQLAlchemy依赖类 """
 
+    name = 'SQLAlchemy'
+
     def __init__(
             self,
             alias: t.Text,
