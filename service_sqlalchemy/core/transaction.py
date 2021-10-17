@@ -39,4 +39,4 @@ def safe_transaction(
         session and session.rollback()
         logger.error(f'unexpected error while execute sql', exc_info=True)
     finally:
-        session and session.close()
+        session and not nested and session.close()
