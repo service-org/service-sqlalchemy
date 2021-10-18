@@ -64,7 +64,7 @@ def update_or_create(
     @return: Query
     """
     defaults = defaults or {}
-    with safe_transaction(orm, commit=False) as session:
+    with safe_transaction(orm) as session:
         queryset = session.query(model).filter_by(**query)
         if queryset.count() > 1: raise MultipleResultsFound(f'{model} - {query}')
         instance = queryset.first()
@@ -75,7 +75,6 @@ def update_or_create(
             defaults.update(query)
             instance = model(**defaults)
             session.add(instance)
-        session.commit()
         return instance
 
 
