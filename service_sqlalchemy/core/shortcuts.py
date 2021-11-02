@@ -25,7 +25,7 @@ def select_or_create(
         *,
         model: BaseModel,
         defaults: t.Optional[t.Dict[t.Text, t.Any]] = None,
-        **query: t.Text
+        **query: t.Any
 ) -> Query:
     """ 查询并创建实例
 
@@ -53,7 +53,7 @@ def update_or_create(
         *,
         model: BaseModel,
         defaults: t.Optional[t.Dict[t.Text, t.Any]] = None,
-        **query: t.Text
+        **query: t.Any
 ) -> Query:
     """ 更新并创建实例
 
