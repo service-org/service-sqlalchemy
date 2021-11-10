@@ -19,7 +19,7 @@ logger = getLogger(__name__)
 def safe_transaction(
         orm: SQLAlchemy,
         *,
-        nested: t.Optional[bool] = None,
+        nested: t.Optional[bool] = False,
         commit: t.Optional[bool] = True,
 ) -> SQLAlchemyClient:
     """ 开启安全事务模式
@@ -29,14 +29,13 @@ def safe_transaction(
     @param nested: 是否嵌套
     @return: SQLAlchemyClient
     """
-    session = None
+    session, finish = None, False
     try:
         session = orm.get_client()
         nested and session.begin_nested()
         yield session
         commit and session.commit()
-    except:
-        session and session.rollback()
-        logger.error(f'unexpected error while execute sql', exc_info=True)
+        finish = True
     finally:
+        session and not finish and session.rollback()
         session and not nested and session.close()
