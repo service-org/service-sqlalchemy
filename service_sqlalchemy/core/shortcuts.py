@@ -13,8 +13,8 @@ from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.declarative import declarative_base
 
 from .searching import Search
+from .dependencies import SQLAlchemy
 from .transaction import safe_transaction
-from .dependencies.session import SQLAlchemy
 
 logger = getLogger(__name__)
 BaseModel = declarative_base()

@@ -4,4 +4,4 @@
 
 from __future__ import annotations
 
-from .session import SQLAlchemy
+from .orm import SQLAlchemy

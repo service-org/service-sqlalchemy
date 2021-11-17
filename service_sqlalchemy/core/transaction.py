@@ -9,8 +9,9 @@ import typing as t
 from logging import getLogger
 from contextlib import contextmanager
 
+from .dependencies import SQLAlchemy
 from .client import SQLAlchemyClient
-from .dependencies.session import SQLAlchemy
+
 
 logger = getLogger(__name__)
 
